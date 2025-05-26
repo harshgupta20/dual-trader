@@ -5,6 +5,7 @@ import FutureIndex from "./pages/FutureIndex";
 import Navbar from "./components/Navbar";
 import AuthContext from "./context/Auth";
 import { useEffect, useState } from "react";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 
 const App = () => {
@@ -21,13 +22,15 @@ const App = () => {
   return (
     <>
       <AuthContext.Provider value={{ authenticationInfo, setAuthenticationInfo }}>
-        <div className="bg-gray-800 min-h-screen text-white">
+        <div className="bg-gray-800 min-h-screen text-white h-screen">
           <Navbar />
+          <div className="p-4 h-[92dvh]">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
-            <Route path="/future-index" element={<FutureIndex />} />
+            <Route path="/future-index" element={<ProtectedRoute><FutureIndex /></ProtectedRoute>} />
           </Routes>
+          </div>
         </div>
       </AuthContext.Provider>
     </>
