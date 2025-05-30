@@ -22,7 +22,7 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error) => {
     // Handle common error logic here
     if (error.response && error.response.status === 401) {
