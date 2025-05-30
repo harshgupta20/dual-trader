@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Account1 from "./pages/zerodhaAuth/Account1";
 import { Toaster } from 'sonner';
+import Profile from "./pages/Profile";
+import localStorageHelper from "./utils/localstorage";
 
 
 const App = () => {
@@ -15,7 +17,7 @@ const App = () => {
   const [authenticationInfo, setAuthenticationInfo] = useState({});
 
   useEffect(() => {
-    const authInfo = localStorage.getItem('authinfo');
+    const authInfo = localStorageHelper.get('authinfo');
     if (authInfo) {
       setAuthenticationInfo(authInfo)
     }
@@ -34,6 +36,7 @@ const App = () => {
                 <Route path="account1" element={<Account1 />} />
               </Route>
               <Route path="/future-index" element={<ProtectedRoute><FutureIndex /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             </Routes>
           </div>
         </div>
