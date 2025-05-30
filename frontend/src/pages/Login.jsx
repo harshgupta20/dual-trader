@@ -1,12 +1,26 @@
+import axiosInstance from "../utils/axiosInterceptor";
+
 const Login = () => {
+
+    const loginZerodha = async () => {
+        try {
+            const response = await axiosInstance.get('https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9');
+        }
+        catch (error) {
+            alert(error?.message);
+        }
+    }
+
     return (
         <>
             <div className='flex flex-col items-center justify-center h-full'>
 
                 <div>
-                    <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
-                        Login Account 1
-                    </button>
+                    <a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
+                        <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                            Login Account 1
+                        </button>
+                    </a>
                     <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
                         Login Account 2
                     </button>

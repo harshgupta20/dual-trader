@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const admin = require('firebase-admin');
+const cors = require('cors');
 require('dotenv').config();
 
 // Load Firebase Admin credentials
@@ -14,6 +15,7 @@ admin.initializeApp({
 // Firestore example
 const db = admin.firestore();
 app.use(express.json());
+app.use(cors());
 
 
 const authRouter = require("./routers/auth");

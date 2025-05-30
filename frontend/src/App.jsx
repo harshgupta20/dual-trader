@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import AuthContext from "./context/Auth";
 import { useEffect, useState } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Account1 from "./pages/zerodhaAuth/Account1";
 
 
 const App = () => {
@@ -27,7 +28,10 @@ const App = () => {
           <div className="p-4 h-[92dvh]">
           <Routes>
             <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" >
+              <Route index element={<Login />} />
+              <Route path="account1" element={<Account1 />} />
+            </Route>
             <Route path="/future-index" element={<ProtectedRoute><FutureIndex /></ProtectedRoute>} />
           </Routes>
           </div>
