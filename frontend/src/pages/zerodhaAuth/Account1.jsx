@@ -5,10 +5,7 @@ import { useEffect } from 'react';
 const Account1 = () => {
 
     const [searchParams] = useSearchParams();
-
-    // Example: if the URL is /page?name=John&age=25
-    const request_token = searchParams.get('request_token'); // 'John'
-
+    const request_token = searchParams.get('request_token');
 
     const getAuthToken = async () => {
         try{
