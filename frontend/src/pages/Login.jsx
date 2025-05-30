@@ -8,7 +8,6 @@ const Login = () => {
 
     const [account1Info, setAccount1Info] = useState({});
     const [account2Info, setAccount2Info] = useState({});
-    const [userInfo1, setUserInfo1] = useState({});
 
     const checkAccountsLoginStatus = () => {
         try {
@@ -56,22 +55,36 @@ const Login = () => {
         <>
             <div className='flex flex-col items-center justify-center h-full'>
 
-                {account1Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 1"} userInfo={account1Info?.userInfo} onLogout={handleLogoutAccount1} />)
-                    :
-                    (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
-                        <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
-                            Login Account 1
-                        </button>
-                    </a>)
-                }
-                {account2Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 2"} userInfo={account2Info?.userInfo} onLogout={handleLogoutAccount2} />)
-                    :
-                    (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
-                        <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
-                            Login Account 2
-                        </button>
-                    </a>)
-                }
+                <div className="flex min-h-[90%] w-full flex-col items-center gap-3 p-2">
+                    <div className="flex min-h-[50%] w-full flex-col items-center border-[1px] border-dotted border-gray-300 rounded p-4">
+                        {account1Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 1"} userInfo={account1Info?.userInfo} onLogout={handleLogoutAccount1} />)
+                            :
+                            (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
+                                <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                                    Login Account 1
+                                </button>
+                            </a>)
+                        }
+                    </div>
+
+                    <div className="flex min-h-[50%] w-full flex-col items-center border-[1px] border-dotted border-gray-300 rounded p-4">
+
+                        {account2Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 2"} userInfo={account2Info?.userInfo} onLogout={handleLogoutAccount2} />)
+                            :
+                            (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
+                                <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                                    Login Account 2
+                                </button>
+                            </a>)
+                        }
+
+                    </div>
+
+                </div>
+                <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                    Continue
+                </button>
+
             </div>
         </>
     )
