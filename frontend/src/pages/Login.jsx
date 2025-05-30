@@ -1,63 +1,77 @@
+import { useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInterceptor";
+import localStorageHelper from "../utils/localstorage";
+import { toast } from "sonner";
+import ProfileCard from "../components/ProfileCard";
 
 const Login = () => {
 
-    const loginZerodha = async () => {
+    const [account1Info, setAccount1Info] = useState({});
+    const [account2Info, setAccount2Info] = useState({});
+    const [userInfo1, setUserInfo1] = useState({});
+
+    const checkAccountsLoginStatus = () => {
         try {
-            const response = await axiosInstance.get('https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9');
+            const user1 = localStorageHelper.get("account1");
+            const user2 = localStorageHelper.get("account2");
+            setAccount1Info(user1 || {});
+            setAccount2Info(user2 || {});
         }
         catch (error) {
-            alert(error?.message);
+            console.log(error);
+            toast.error(error?.message || error?.message || "An error occurred");
         }
     }
+
+    const userInfo = {
+        user_type: 'admin',
+        email: 'john.doe@example.com',
+        full_name: 'John Doe',
+        user_shortname: 'JD',
+        avatar_url: '', // No photo to test initial fallback
+        login_time: '2025-05-31T10:20:00Z',
+        products: ['Stocks', 'Mutual Funds'],
+        exchanges: ['NSE', 'BSE'],
+    };
+
+    const handleLogoutAccount1 = () => {
+        console.log("Logging out...");
+        localStorageHelper.remove("account1");
+        setAccount1Info({});
+        // Your logout logic here
+    };
+    const handleLogoutAccount2 = () => {
+        console.log("Logging out...");
+        localStorageHelper.remove("account2");
+        setAccount2Info({});
+        // Your logout logic here
+    };
+
+    useEffect(() => {
+        document.title = "Login | EZ Trade";
+        checkAccountsLoginStatus();
+    }, [])
 
     return (
         <>
             <div className='flex flex-col items-center justify-center h-full'>
 
-                <div>
-                    <a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
+                {account1Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 1"} userInfo={account1Info?.userInfo} onLogout={handleLogoutAccount1} />)
+                    :
+                    (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
                         <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
                             Login Account 1
                         </button>
-                    </a>
-                    <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
-                        Login Account 2
-                    </button>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                    <div className="border-2 border-gray-600 p-4">
-                        <table className='w-full'>
-                            <tr>
-                                <td className="font-bold pr-2">Account Holder</td>
-                                <td className="italic">John Doe</td>
-                            </tr>
-                            <tr>
-                                <td className="font-bold pr-2">Email</td>
-                                <td className="italic">gE7oC@example.com</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div className="border-2 border-gray-600 p-4">
-                        <table className='w-full'>
-                            <tr>
-                                <td className="font-bold pr-2">Account Holder</td>
-                                <td className="italic">John Doe</td>
-                            </tr>
-                            <tr>
-                                <td className="font-bold pr-2">Email</td>
-                                <td className="italic">gE7oC@example.com</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-
-
-                <div className="w-full pt-4">
-                    <button className="border-2 border-violet-600 text-violet-400 px-6 py-2 rounded w-full">Continue</button>
-                </div>
-
+                    </a>)
+                }
+                {account2Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 2"} userInfo={account2Info?.userInfo} onLogout={handleLogoutAccount2} />)
+                    :
+                    (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
+                        <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                            Login Account 2
+                        </button>
+                    </a>)
+                }
             </div>
         </>
     )

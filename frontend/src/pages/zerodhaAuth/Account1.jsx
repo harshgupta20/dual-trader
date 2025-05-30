@@ -25,19 +25,21 @@ const Account1 = () => {
                 { request_token }
             );
 
-            if (response?.data?.success) {
-                localStorageHelper.set("token", response?.data?.token);
-                localStorageHelper.set("userInfo", response?.data?.userInfo);
+            if (response?.success) {
+                const totalAccounts = localStorageHelper.get("totalAccounts") || {};
+                localStorageHelper.set("account1", response?.data);
+                localStorageHelper.set("totalAccounts", {...totalAccounts, [`account${Object.keys(totalAccounts).length + 1}`]: response?.data?.userInfo?.user_id, [`account${totalAccounts.length + 1}`]: response?.data?.userInfo?.user_id});
+                
                 toast.success(response?.data?.message || "Login successful");
                 console.log("harsh", response?.data);
                 setStatus('success');
             } else {
-                toast.error(response?.data?.message || "Login failed");
+                toast.error(response?.message || "Login failed");
                 console.log("harsh login failed:", response?.data);
                 setStatus('error');
             }
         } catch (error) {
-            toast.error(error?.response?.data?.message || error?.message || "An error occurred");
+            toast.error(error?.message || error?.message || "An error occurred");
             console.log("harsh error", error);
             setStatus('error');
         }
