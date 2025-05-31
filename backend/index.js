@@ -21,10 +21,25 @@ app.use(cors());
 const authRouter = require("./routers/auth");
 const userRouter = require("./routers/user");
 const tradeRouter = require("./routers/trade");
+const logger = require('./utils/winstonLogger');
 
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/trade", tradeRouter);
+
+
+// LOGGER
+app.use((req, res, next) => {
+  logger.info('Incoming request: %s %s', req.method, req.url);
+
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info('Request completed: %s %s - Status: %d - %dms',
+      req.method, req.url, res.statusCode, duration);
+  });
+  next();
+});
 
 app.get('/', (req, res) => {
     res.json({

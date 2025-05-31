@@ -1,175 +1,174 @@
 const { generateSHA256Checksum } = require('./helperFunction');
-
 const axios = require('axios');
+const logger = require('./winstonLogger');
 
 const ZERODHA_API_KEY = process.env.ZERODHA_API_KEY;
 const ZERODHA_API_SECRET = process.env.ZERODHA_API_SECRET;
+
 const createZerodhaSession = async ({ request_token }) => {
-    try {
+  try {
+    logger.info('Initiating Zerodha session creation | request_token: %s', request_token);
 
-        const checksum = await generateSHA256Checksum(ZERODHA_API_KEY + request_token + ZERODHA_API_SECRET)
+    const checksum = await generateSHA256Checksum(ZERODHA_API_KEY + request_token + ZERODHA_API_SECRET);
+    logger.debug('Generated checksum: %s', checksum);
 
-        const response = await axios.post(`https://api.kite.trade/session/token`,
-            new URLSearchParams({
-                api_key: ZERODHA_API_KEY,
-                request_token: request_token,
-                checksum: checksum
-            }),
-            {
-                headers: {
-                    'X-Kite-Version': '3',
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            });
-        return { success: true, data: response.data };
-    } catch (error) {
-        console.error('Error creating Zerodha session:', error);
-        throw error;
-    }
-}
+    const response = await axios.post('https://api.kite.trade/session/token',
+      new URLSearchParams({
+        api_key: ZERODHA_API_KEY,
+        request_token,
+        checksum,
+      }),
+      {
+        headers: {
+          'X-Kite-Version': '3',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+
+    logger.info('Zerodha session created | status: %d | user_id: %s', response.status, response.data?.data?.user_id);
+    return { success: true, data: response.data };
+  } catch (error) {
+    logger.error('Zerodha session creation failed | request_token: %s | error: %o', request_token, error.response?.data || error.message);
+    throw error;
+  }
+};
 
 const getZerodhaProfile = async ({ access_token }) => {
-    if (!access_token) {
-        throw new Error('Missing access_token');
-    }
+  if (!access_token) throw new Error('Missing access_token');
 
-    try {
-        const response = await axios.get('https://api.kite.trade/user/profile', {
-            headers: {
-                'X-Kite-Version': '3',
-                'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
-            },
-        });
+  try {
+    logger.info('Fetching Zerodha profile | access_token provided');
 
-        return { success: true, data: response.data };
-    } catch (error) {
-        console.error('Error fetching Zerodha profile:', error.response?.data || error.message);
-        return {
-            success: false,
-            error: error.response?.data || 'Failed to fetch profile',
-        };
-    }
+    const response = await axios.get('https://api.kite.trade/user/profile', {
+      headers: {
+        'X-Kite-Version': '3',
+        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+      },
+    });
+
+    logger.info('Zerodha profile fetched | status: %d | user_id: %s', response.status, response.data?.data?.user_id);
+    return { success: true, data: response.data };
+  } catch (error) {
+    logger.error('Failed to fetch Zerodha profile | error: %o', error.response?.data || error.message);
+    return { success: false, error: error.response?.data || 'Failed to fetch profile' };
+  }
 };
 
 const placeZerodhaOrder = async ({
-    access_token,
-    tradingsymbol,
-    exchange,
-    transaction_type, // 'BUY' or 'SELL'
-    order_type,        // 'MARKET', 'LIMIT', etc.
-    quantity,
-    product,           // 'MIS', 'CNC', 'NRML'
-    price = 0,         // Required for LIMIT orders
+  access_token,
+  tradingsymbol,
+  exchange,
+  transaction_type,
+  order_type,
+  quantity,
+  product,
+  price = 0,
 }) => {
-    if (!access_token) throw new Error('Missing access_token');
+  if (!access_token) throw new Error('Missing access_token');
 
-    try {
-        const response = await axios.post(
-            'https://api.kite.trade/orders/regular',
-            new URLSearchParams({
-                tradingsymbol,
-                exchange,
-                transaction_type,
-                order_type,
-                quantity: quantity.toString(),
-                product,
-                price: price.toString(),
-                validity: 'DAY',
-            }),
-            {
-                headers: {
-                    'X-Kite-Version': '3',
-                    'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            }
-        );
-
-        return { success: true, data: response.data };
-    } catch (error) {
-        console.error('Error placing order:', error.response?.data || error.message);
-        return {
-            success: false,
-            error: error.response?.data || 'Order placement failed',
-        };
-    }
-};
-
-
-
-
-
-
-/**
- * Fetches real-time market data (quote) for one or more instruments from Zerodha.
- *
- * @param {Object} params - Parameters object
- * @param {string} params.access_token - User's Zerodha access token obtained after login
- * @param {string[]} params.instruments - Array of instrument identifiers (e.g., ['NSE:INFY', 'NSE:NIFTY 50'])
- *                                        Each instrument string specifies the exchange and symbol,
- *                                        like 'NSE:INFY' for Infosys stock or 'NSE:NIFTY 50' for Nifty index.
- *
- * @returns {Promise<Object>} - Resolves with real-time quote data for requested instruments.
- */
-const getZerodhaQuote = async ({ access_token, instruments }) => {
-    if (!access_token || !instruments?.length) {
-        throw new Error('Missing access_token or instruments');
-    }
-
-    try {
-        const query = instruments.map(i => `i=${encodeURIComponent(i)}`).join('&');
-
-        const response = await axios.get(
-            `https://api.kite.trade/quote?${query}`,
-            {
-                headers: {
-                    'X-Kite-Version': '3',
-                    'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
-                },
-            }
-        );
-
-        return { success: true, data: response.data.data };
-    } catch (error) {
-        console.error('Error fetching Zerodha quote:', error.response?.data || error.message);
-        return {
-            success: false,
-            error: error.response?.data || 'Failed to fetch real-time quote',
-        };
-    }
-};
-
-
-
-
-const getLTP = async ({access_token, instrument}) => {
   try {
+    logger.info('Placing Zerodha order | %o', {
+      tradingsymbol,
+      exchange,
+      transaction_type,
+      order_type,
+      quantity,
+      product,
+      price,
+    });
+
+    const response = await axios.post(
+      'https://api.kite.trade/orders/regular',
+      new URLSearchParams({
+        tradingsymbol,
+        exchange,
+        transaction_type,
+        order_type,
+        quantity: quantity.toString(),
+        product,
+        price: price.toString(),
+        validity: 'DAY',
+      }),
+      {
+        headers: {
+          'X-Kite-Version': '3',
+          'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    logger.info('Zerodha order placed | order_id: %s | status: %d', response.data?.data?.order_id, response.status);
+    return { success: true, data: response.data };
+  } catch (error) {
+    logger.error('Order placement failed | tradingsymbol: %s | error: %o', tradingsymbol, error.response?.data || error.message);
+    return { success: false, error: error.response?.data || 'Order placement failed' };
+  }
+};
+
+const getZerodhaQuote = async ({ access_token, instruments }) => {
+  if (!access_token || !instruments?.length) {
+    throw new Error('Missing access_token or instruments');
+  }
+
+  try {
+    logger.info('Fetching Zerodha quote | instruments: %o', instruments);
+    const query = instruments.map(i => `i=${encodeURIComponent(i)}`).join('&');
+
+    const response = await axios.get(`https://api.kite.trade/quote?${query}`, {
+      headers: {
+        'X-Kite-Version': '3',
+        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+      },
+    });
+
+    logger.info('Quote fetched | instruments: %d | status: %d', instruments.length, response.status);
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    logger.error('Quote fetch failed | instruments: %o | error: %o', instruments, error.response?.data || error.message);
+    return { success: false, error: error.response?.data || 'Failed to fetch real-time quote' };
+  }
+};
+
+const getLTP = async ({ access_token, instrument }) => {
+  try {
+    logger.info('Getting LTP | instrument: %s', instrument);
+
     const response = await axios.get(`https://api.kite.trade/quote?i=${instrument}`, {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`
-      }
+        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+      },
     });
-    return response.data.data[instrument].last_price;
+
+    const ltp = response.data?.data?.[instrument]?.last_price;
+    logger.info('LTP received | instrument: %s | price: %d', instrument, ltp);
+
+    return ltp;
   } catch (error) {
+    logger.error('LTP fetch failed | instrument: %s | error: %o', instrument, error.response?.data || error.message);
     throw new Error('Failed to fetch LTP');
   }
 };
 
-const placeNiftyFutureOrderWithStopLoss = async () => {
-  const instrument = 'NFO:NIFTY23JUNFUT'; // example instrument token for Nifty Future
+const placeNiftyFutureOrderWithStopLoss = async ({ access_token }) => {
+  const instrument = 'NFO:NIFTY23JUNFUT';
 
   try {
-    const currentPrice = await getLTP(instrument);
+    logger.info('Placing Nifty Future order with SL | instrument: %s', instrument);
+
+    const currentPrice = await getLTP({ access_token, instrument });
     const stopLossPrice = currentPrice - 100;
+
+    logger.debug('Calculated stop loss | currentPrice: %d | stopLoss: %d', currentPrice, stopLossPrice);
 
     const response = await axios.post('https://api.kite.trade/orders/co',
       new URLSearchParams({
         tradingsymbol: 'NIFTY23JUNFUT',
         exchange: 'NFO',
         transaction_type: 'BUY',
-        quantity: '1',           // set appropriate quantity
-        product: 'MIS',          // intraday
+        quantity: '1',
+        product: 'MIS',
         order_type: 'MARKET',
         stoploss: stopLossPrice.toString(),
         variety: 'co',
@@ -183,27 +182,38 @@ const placeNiftyFutureOrderWithStopLoss = async () => {
       }
     );
 
+    logger.info('Nifty Future order placed | order_id: %s | status: %d', response.data?.data?.order_id, response.status);
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Error placing Nifty Future order:', error.response?.data || error.message);
+    logger.error('Nifty Future order failed | error: %o', error.response?.data || error.message);
     return { success: false, error: error.message };
   }
 };
 
-
-const getPortfolioHoldings = async ({access_token}) => {
+const getPortfolioHoldings = async ({ access_token }) => {
   try {
+    logger.info('Getting portfolio holdings');
+
     const response = await axios.get('https://api.kite.trade/portfolio/holdings', {
       headers: {
         'X-Kite-Version': '3',
         'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`
       }
     });
+
+    logger.info('Holdings fetched | count: %d', response.data?.data?.length || 0);
     return { success: true, data: response.data.data };
   } catch (error) {
-    console.error('Error fetching portfolio holdings:', error.response?.data || error.message);
+    logger.error('Holdings fetch failed | error: %o', error.response?.data || error.message);
     return { success: false, error: error.message };
   }
 };
 
-module.exports = { createZerodhaSession, placeZerodhaOrder, getZerodhaProfile, getZerodhaQuote, placeNiftyFutureOrderWithStopLoss, getPortfolioHoldings };
+module.exports = {
+  createZerodhaSession,
+  placeZerodhaOrder,
+  getZerodhaProfile,
+  getZerodhaQuote,
+  placeNiftyFutureOrderWithStopLoss,
+  getPortfolioHoldings
+};
