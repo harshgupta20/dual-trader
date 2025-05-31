@@ -3,7 +3,7 @@ const router = express.Router();
 
 const tradeController = require('../controllers/trade');
 
-router.post('/profile', tradeController.getPortfolio);
+router.post('/portfolio', tradeController.getPortfolio);
 
 
 module.exports = router;

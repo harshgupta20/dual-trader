@@ -20,9 +20,11 @@ app.use(cors());
 
 const authRouter = require("./routers/auth");
 const userRouter = require("./routers/user");
+const tradeRouter = require("./routers/trade");
 
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
+app.use("/trade", tradeRouter);
 
 app.get('/', (req, res) => {
     res.json({
