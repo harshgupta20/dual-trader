@@ -60,7 +60,7 @@ const Login = () => {
                         {account1Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 1"} userInfo={account1Info?.userInfo} onLogout={handleLogoutAccount1} />)
                             :
                             (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
-                                <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                                <button className='bg-indigo-600 px-6 py-2 rounded my-2 w-full'>
                                     Login Account 1
                                 </button>
                             </a>)
@@ -72,7 +72,7 @@ const Login = () => {
                         {account2Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 2"} userInfo={account2Info?.userInfo} onLogout={handleLogoutAccount2} />)
                             :
                             (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
-                                <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                                <button className='bg-indigo-600 px-6 py-2 rounded my-2 w-full'>
                                     Login Account 2
                                 </button>
                             </a>)
@@ -81,7 +81,7 @@ const Login = () => {
                     </div>
 
                 </div>
-                <button className='bg-violet-600 px-6 py-2 rounded my-2 w-full'>
+                <button className='bg-indigo-600 px-6 py-2 rounded my-2 w-full'>
                     Continue
                 </button>
 
