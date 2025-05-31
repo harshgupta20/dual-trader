@@ -3,6 +3,10 @@ const ZERODHA_API_DEFINITIONS = {
         METHOD: 'POST',
         URL: 'https://api.kite.trade/session/token',
         BODY: ["api_key", "request_token", "checksum"]
+    },
+    GET_PROFILE: {
+        METHOD: 'GET',
+        URL: 'https://api.kite.trade/user/profile',
     }
 }
 

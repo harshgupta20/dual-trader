@@ -19,8 +19,10 @@ app.use(cors());
 
 
 const authRouter = require("./routers/auth");
+const userRouter = require("./routers/user");
 
 app.use("/auth", authRouter);
+app.use("/user", userRouter);
 
 app.get('/', (req, res) => {
     res.json({
