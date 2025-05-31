@@ -1,10 +1,10 @@
-import { generateSHA256Checksum } from './helperFunction';
+const { generateSHA256Checksum } = require('./helperFunction');
 
 const axios = require('axios');
 
 const ZERODHA_API_KEY = process.env.ZERODHA_API_KEY;
 const ZERODHA_API_SECRET = process.env.ZERODHA_API_SECRET;
-export const createZerodhaSession = async ({ request_token }) => {
+const createZerodhaSession = async ({ request_token }) => {
     try {
 
         const checksum = await generateSHA256Checksum(ZERODHA_API_KEY + request_token + ZERODHA_API_SECRET)
@@ -28,7 +28,7 @@ export const createZerodhaSession = async ({ request_token }) => {
     }
 }
 
-export const getZerodhaProfile = async ({ access_token }) => {
+const getZerodhaProfile = async ({ access_token }) => {
     if (!access_token) {
         throw new Error('Missing access_token');
     }
@@ -51,7 +51,7 @@ export const getZerodhaProfile = async ({ access_token }) => {
     }
 };
 
-export const placeZerodhaOrder = async ({
+const placeZerodhaOrder = async ({
     access_token,
     tradingsymbol,
     exchange,
@@ -111,7 +111,7 @@ export const placeZerodhaOrder = async ({
  *
  * @returns {Promise<Object>} - Resolves with real-time quote data for requested instruments.
  */
-export const getZerodhaQuote = async ({ access_token, instruments }) => {
+const getZerodhaQuote = async ({ access_token, instruments }) => {
     if (!access_token || !instruments?.length) {
         throw new Error('Missing access_token or instruments');
     }
@@ -142,7 +142,7 @@ export const getZerodhaQuote = async ({ access_token, instruments }) => {
 
 
 
-export const getLTP = async ({access_token, instrument}) => {
+const getLTP = async ({access_token, instrument}) => {
   try {
     const response = await axios.get(`https://api.kite.trade/quote?i=${instrument}`, {
       headers: {
@@ -156,7 +156,7 @@ export const getLTP = async ({access_token, instrument}) => {
   }
 };
 
-export const placeNiftyFutureOrderWithStopLoss = async () => {
+const placeNiftyFutureOrderWithStopLoss = async () => {
   const instrument = 'NFO:NIFTY23JUNFUT'; // example instrument token for Nifty Future
 
   try {
@@ -189,3 +189,21 @@ export const placeNiftyFutureOrderWithStopLoss = async () => {
     return { success: false, error: error.message };
   }
 };
+
+
+const getPortfolioHoldings = async ({access_token}) => {
+  try {
+    const response = await axios.get('https://api.kite.trade/portfolio/holdings', {
+      headers: {
+        'X-Kite-Version': '3',
+        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`
+      }
+    });
+    return { success: true, data: response.data.data };
+  } catch (error) {
+    console.error('Error fetching portfolio holdings:', error.response?.data || error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+module.exports = { createZerodhaSession, placeZerodhaOrder, getZerodhaProfile, getZerodhaQuote, placeNiftyFutureOrderWithStopLoss, getPortfolioHoldings };
