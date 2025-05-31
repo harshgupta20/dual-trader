@@ -1,13 +1,12 @@
 // ProtectedRoute.js
-import { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
-import AuthContext from '../context/Auth';
+import localStorageHelper from '../utils/localstorage';
 
 const ProtectedRoute = ({ children }) => {
 
-    const { authenticationInfo } = useContext(AuthContext);
+    const {token} = localStorageHelper.get('account1');
 
-  if (!authenticationInfo?.token) {
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 
