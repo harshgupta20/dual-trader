@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axiosInstance from "../utils/axiosInterceptor";
 import localStorageHelper from "../utils/localstorage";
 import { toast } from "sonner";
 import ProfileCard from "../components/ProfileCard";
@@ -50,7 +49,7 @@ const Login = () => {
                     <div className="flex min-h-[50%] w-full flex-col items-center border-[1px] border-dotted border-gray-300 rounded p-4">
                         {account1Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 1"} userInfo={account1Info?.userInfo} onLogout={handleLogoutAccount1} />)
                             :
-                            (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=1y1ohmgx6u3e1tt9" noreferrer>
+                            (<a href={`https://kite.zerodha.com/connect/login?v=3&api_key=${import.meta.env.VITE_ZERODHA_ACCOUNT1_API_KEY}`} noreferrer>
                                 <button className='bg-indigo-600 px-6 py-2 rounded my-2 w-full'>
                                     Login as Harsh
                                 </button>
@@ -62,7 +61,7 @@ const Login = () => {
 
                         {account2Info?.userInfo?.user_id ? (<ProfileCard accountNo={"Account 2"} userInfo={account2Info?.userInfo} onLogout={handleLogoutAccount2} />)
                             :
-                            (<a href="https://kite.zerodha.com/connect/login?v=3&api_key=78jc86fafepsw9dk" noreferrer>
+                            (<a href={`https://kite.zerodha.com/connect/login?v=3&api_key=${import.meta.env.VITE_ZERODHA_ACCOUNT2_API_KEY}`} noreferrer>
                                 <button className='bg-indigo-600 px-6 py-2 rounded my-2 w-full'>
                                     Login as Ashish
                                 </button>
