@@ -11,6 +11,7 @@ import { Toaster } from 'sonner';
 import Profile from "./pages/Profile";
 import localStorageHelper from "./utils/localstorage";
 import DualOrder from "./pages/DualOrder";
+import Account2 from "./pages/zerodhaAuth/Account2";
 
 
 const App = () => {
@@ -18,7 +19,7 @@ const App = () => {
   const [authenticationInfo, setAuthenticationInfo] = useState({});
 
   useEffect(() => {
-    const authInfo = localStorageHelper.get('account1');
+    const authInfo = localStorageHelper.get('accounts');
     if (authInfo) {
       setAuthenticationInfo(authInfo)
     }
@@ -35,6 +36,7 @@ const App = () => {
               <Route path="/login" >
                 <Route index element={<Login />} />
                 <Route path="account1" element={<Account1 />} />
+                <Route path="account2" element={<Account2 />} />
               </Route>
               <Route path="/future-index" element={<ProtectedRoute><FutureIndex /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

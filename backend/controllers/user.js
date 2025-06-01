@@ -7,7 +7,7 @@ module.exports = {
         try {
             const {access_token} = req.body;
 
-            const API_KEY = process.env.ZERODHA_API_KEY;
+            const API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
 
             const response = await axios.get(
                 ZERODHA_API_DEFINITIONS.GET_PROFILE.URL,

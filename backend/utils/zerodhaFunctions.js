@@ -2,19 +2,19 @@ const { generateSHA256Checksum } = require('./helperFunction');
 const axios = require('axios');
 const logger = require('./winstonLogger');
 
-const ZERODHA_API_KEY = process.env.ZERODHA_API_KEY;
-const ZERODHA_API_SECRET = process.env.ZERODHA_API_SECRET;
+const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
+const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
 
 const createZerodhaSession = async ({ request_token }) => {
   try {
     logger.info('Initiating Zerodha session creation | request_token: %s', request_token);
 
-    const checksum = await generateSHA256Checksum(ZERODHA_API_KEY + request_token + ZERODHA_API_SECRET);
+    const checksum = await generateSHA256Checksum(ZERODHA_ACCOUNT1_API_KEY + request_token + ZERODHA_ACCOUNT1_API_SECRET);
     logger.debug('Generated checksum: %s', checksum);
 
     const response = await axios.post('https://api.kite.trade/session/token',
       new URLSearchParams({
-        api_key: ZERODHA_API_KEY,
+        api_key: ZERODHA_ACCOUNT1_API_KEY,
         request_token,
         checksum,
       }),
@@ -42,7 +42,7 @@ const getZerodhaProfile = async ({ access_token }) => {
     const response = await axios.get('https://api.kite.trade/user/profile', {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
       },
     });
 
@@ -92,7 +92,7 @@ const placeZerodhaOrder = async ({
       {
         headers: {
           'X-Kite-Version': '3',
-          'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
@@ -118,7 +118,7 @@ const getZerodhaQuote = async ({ access_token, instruments }) => {
     const response = await axios.get(`https://api.kite.trade/quote?${query}`, {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
       },
     });
 
@@ -137,7 +137,7 @@ const getLTP = async ({ access_token, instrument }) => {
     const response = await axios.get(`https://api.kite.trade/quote?i=${instrument}`, {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
       },
     });
 
@@ -176,7 +176,7 @@ const placeNiftyFutureOrderWithStopLoss = async ({ access_token }) => {
       {
         headers: {
           'X-Kite-Version': '3',
-          'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
@@ -197,7 +197,7 @@ const getPortfolioHoldings = async ({ access_token }) => {
     const response = await axios.get('https://api.kite.trade/portfolio/holdings', {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`
+        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`
       }
     });
 

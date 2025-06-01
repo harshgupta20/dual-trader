@@ -13,7 +13,6 @@ const Account1 = () => {
     const getAuthToken = async () => {
         if (!request_token) {
             toast.error("Request token not found");
-            console.log("harsh request token not found");
             setStatus('error');
             return;
         }
@@ -22,25 +21,23 @@ const Account1 = () => {
             setStatus('loading');
             const response = await axiosInstance.post(
                 `${import.meta.env.VITE_BACKEND_BASE_URL}/auth/login`,
-                { request_token }
+                { request_token, account_type: "account1" }
             );
-
+            
             if (response?.success) {
                 const totalAccounts = localStorageHelper.get("totalAccounts") || {};
-                localStorageHelper.set("account1", response?.data);
+                const accounts = localStorageHelper.get("accounts");
+                localStorageHelper.set("accounts", {...accounts, account1: response?.data});
                 localStorageHelper.set("totalAccounts", {...totalAccounts, [`account${Object.keys(totalAccounts).length + 1}`]: response?.data?.userInfo?.user_id, [`account${totalAccounts.length + 1}`]: response?.data?.userInfo?.user_id});
                 
                 toast.success(response?.data?.message || "Login successful");
-                console.log("harsh", response?.data);
                 setStatus('success');
             } else {
                 toast.error(response?.message || "Login failed");
-                console.log("harsh login failed:", response?.data);
                 setStatus('error');
             }
         } catch (error) {
             toast.error(error?.message || error?.message || "An error occurred");
-            console.log("harsh error", error);
             setStatus('error');
         }
     };

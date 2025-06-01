@@ -4,9 +4,9 @@ import localStorageHelper from '../utils/localstorage';
 
 const ProtectedRoute = ({ children }) => {
 
-    const {token} = localStorageHelper.get('account1');
+  const accounts = localStorageHelper.get('accounts');
 
-  if (!token) {
+  if (!accounts?.account1?.token && !accounts?.account2?.token) {
     return <Navigate to="/login" replace />;
   }
 
