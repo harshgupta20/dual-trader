@@ -1,5 +1,6 @@
 import { useContext } from "react"
 import AuthContext from "../context/Auth"
+import AnchorTemporaryDrawer from "./NavMenuOptions"
 
 const Navbar = () => {
 
@@ -19,6 +20,8 @@ const Navbar = () => {
                     <li onClick={handleLogout} className='cursor-pointer bg-red-800 px-4 py-2 rounded'>Logout</li>
                 </ul>
             )}
+
+            <AnchorTemporaryDrawer/>
         </nav>
     )
 }

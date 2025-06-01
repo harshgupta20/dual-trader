@@ -27,6 +27,8 @@ const FutureIndex = () => {
     // setBuyPrice(val ? parseFloat(val) + 100 : "");
   };
 
+  const placeOrder = () => {};
+
   return (
     <div className="flex flex-col gap-3 justify-between w-full h-full">
       <div className="flex flex-col grow gap-3 overflow-hidden">
