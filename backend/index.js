@@ -1,30 +1,19 @@
 const express = require('express');
 const app = express();
-// const admin = require('firebase-admin');
 const cors = require('cors');
-require('dotenv').config();
-
-// Load Firebase Admin credentials
-// const serviceAccount = require('./firebaseServiceAccount');
-const PORT = process.env.PORT || 3000;
-// admin.initializeApp({
-//     credential: admin.credential.cert(serviceAccount),
-//     databaseURL: 'https://<your-project-id>.firebaseio.com' // Replace with your Firebase DB URL
-// });
-
-// Firestore example
-// const db = admin.firestore();
-app.use(express.json());
-app.use(cors());
-
-
 const authRouter = require("./routers/auth");
 const userRouter = require("./routers/user");
 const tradeRouter = require("./routers/trade");
 const logger = require('./utils/winstonLogger');
 const KillSwitch = require('./middllewares/killSwitch');
 const db = require('./utils/FirebaseInitiate');
+require('dotenv').config();
 
+
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use(cors());
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/trade", tradeRouter);
