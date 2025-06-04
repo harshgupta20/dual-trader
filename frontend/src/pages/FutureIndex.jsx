@@ -34,11 +34,11 @@ const FutureIndex = () => {
       <div className="flex flex-col grow gap-3 overflow-hidden">
         {/* NIFTY PRICE SHOW */}
         <div className="flex flex-col gap-3 max-h-[30%] overflow-scroll">
-          <div className="flex justify-between items-center p-4 bg-indigo-500">
+          <div className="flex justify-between items-center text-white p-4 bg-gray-500">
             <p className="font-bold">Nifty 50</p>
             <p>90387</p>
           </div>
-          <div className="flex justify-between items-center p-4 bg-indigo-500">
+          <div className="flex justify-between items-center text-white p-4 bg-gray-500">
             <p className="font-bold">Nifty Future May</p>
             <p>90387</p>
           </div>
@@ -73,7 +73,7 @@ const FutureIndex = () => {
         </div>
       </div>
 
-      <button className="bg-indigo-500 p-2 rounded">Place Order</button>
+      <button className="bg-gray-500 text-white p-2 rounded">Place Order</button>
     </div>
   );
 };

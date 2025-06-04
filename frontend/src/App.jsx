@@ -28,7 +28,7 @@ const App = () => {
   return (
     <>
       <AuthContext.Provider value={{ authenticationInfo, setAuthenticationInfo }}>
-        <div className="bg-gray-800 min-h-screen text-white h-screen">
+        <div className=" min-h-screen h-screen">
           <Navbar />
           <div className="p-4 h-[92dvh]">
             <Routes>

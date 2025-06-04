@@ -35,7 +35,7 @@ const FutureIndexTradeCard = ({
 
     return (
         <div
-            className={`flex flex-col justify-between items-center p-3 border-[2px] border-indigo-400 rounded ${orderStatus === "success" && "bg-green-600"
+            className={`flex flex-col justify-between items-center p-3 border-[2px] border-gray-400 rounded ${orderStatus === "success" && "bg-green-600"
                 } ${orderStatus === "failed" && "bg-red-600"}`}
         >
             <div className="w-full text-left pb-3">
@@ -50,7 +50,7 @@ const FutureIndexTradeCard = ({
                         </label>
                         <input
                             id={`quantity-${title}`}
-                            className="w-full p-1 border-[1px] border-indigo-400 rounded"
+                            className="w-full p-1 border-[1px] border-gray-400 rounded"
                             placeholder="Quantity"
                             type="number"
                             value={quantity}
@@ -63,7 +63,7 @@ const FutureIndexTradeCard = ({
                         </label>
                         <input
                             id={`price-${title}`}
-                            className="w-full p-1 border-[1px] border-indigo-400 rounded"
+                            className="w-full p-1 border-[1px] border-gray-400 rounded"
                             placeholder="Price"
                             type="number"
                             value={price}
@@ -78,7 +78,7 @@ const FutureIndexTradeCard = ({
                     </label>
                     <input
                         id={`stoploss-${title}`}
-                        className="w-full p-1 border-[1px] border-indigo-400 rounded"
+                        className="w-full p-1 border-[1px] border-gray-400 rounded"
                         placeholder="Stop Loss"
                         type="number"
                         value={stopLoss}
