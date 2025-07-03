@@ -239,6 +239,8 @@ const GetFutureNiftyAndBankNiftyExpiry = async () => {
               instrument_type: data.instrument_type,
               segment: data.segment,
               last_price: data.last_price,
+              expiry: data.expiry,
+              lot_size: data.lot_size,
             });
           }
         })
