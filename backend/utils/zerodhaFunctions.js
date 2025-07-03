@@ -1,6 +1,7 @@
 const { generateSHA256Checksum } = require('./helperFunction');
 const axios = require('axios');
 const logger = require('./winstonLogger');
+const csv = require('csv-parser');
 
 const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
 const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
@@ -65,6 +66,10 @@ const placeZerodhaOrder = async ({
   price = 0,
 }) => {
   if (!access_token) throw new Error('Missing access_token');
+
+  if (product === 'CNC') {
+    if (!price) throw new Error('Missing price');
+  }
 
   try {
     logger.info('Placing Zerodha order | %o', {
@@ -209,11 +214,50 @@ const getPortfolioHoldings = async ({ access_token }) => {
   }
 };
 
+const GetFutureNiftyAndBankNiftyExpiry = async () => {
+  try {
+    const response = await axios({
+      method: 'get',
+      url: 'https://api.kite.trade/instruments',
+      responseType: 'stream',
+    });
+
+    return new Promise((resolve, reject) => {
+      const results = [];
+      response.data
+        .pipe(csv())
+        .on('data', (data) => {
+          let isNiftyOrBankNifty = (data) => (data?.name?.toLowerCase() === 'banknifty' || data?.name?.toLowerCase() === 'nifty');
+          let isInstrumentTypeFuture = (data) => (data?.instrument_type?.toLowerCase() === 'fut');
+          let isExchangeNFO = (data) => (data?.exchange?.toLowerCase() === 'nfo');
+          let isSegmentFutures = (data) => (data?.segment === 'NFO-FUT');
+          if (isNiftyOrBankNifty(data) && isInstrumentTypeFuture(data) && isExchangeNFO(data) && isSegmentFutures(data)) {
+            results.push({
+              tradingsymbol: data.tradingsymbol,
+              exchange: data.exchange,
+              name: data.name,
+              instrument_type: data.instrument_type,
+              segment: data.segment,
+              last_price: data.last_price,
+            });
+          }
+        })
+        .on('end', () => resolve(results))
+        .on('error', reject)
+    });
+  }
+  catch (error) {
+    logger.error('Failed to fetch instruments | error: %o', error.response?.data || error.message);
+    return { success: false, error: error.response?.data || error.message || 'Failed to fetch instruments' };
+  }
+}
+
 module.exports = {
   createZerodhaSession,
   placeZerodhaOrder,
   getZerodhaProfile,
   getZerodhaQuote,
   placeNiftyFutureOrderWithStopLoss,
-  getPortfolioHoldings
+  getPortfolioHoldings,
+  GetFutureNiftyAndBankNiftyExpiry
 };
