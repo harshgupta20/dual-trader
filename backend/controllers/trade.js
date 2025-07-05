@@ -1,4 +1,4 @@
-const { getPortfolioHoldings, placeZerodhaOrder, GetFutureNiftyAndBankNiftyExpiry } = require("../utils/zerodhaFunctions");
+const { getPortfolioHoldings, placeZerodhaOrder, GetFutureNiftyAndBankNiftyExpiry, placeNiftyFutureLimitBuyWithStopLoss } = require("../utils/zerodhaFunctions");
 
 
 module.exports = {
@@ -42,9 +42,9 @@ module.exports = {
 
             console.log(body)
 
-            const response = await placeZerodhaOrder({...body});
+            const response = await placeZerodhaOrder({ ...body });
 
-            if(response.success){
+            if (response.success) {
                 return res.status(200).json({ success: true, data: response.data, payload: body });
             }
             else {
@@ -65,7 +65,37 @@ module.exports = {
 
             const response = await GetFutureNiftyAndBankNiftyExpiry();
 
-            if(response){
+            if (response) {
+                return res.status(200).json({ success: true, data: response });
+            }
+            else {
+                return res.status(500).json({ success: false, error: response.error });
+            }
+        }
+        catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
+    },
+
+    buyFutureAndStoploss: async (req, res) => {
+        try {
+            const { access_token } = req.body;
+            if (!access_token) {
+                return res.status(400).json({ success: false, error: "Missing access_token" });
+            }
+
+            const payload = {
+                access_token: req.body.access_token,
+                tradingsymbol: req.body.tradingsymbol,
+                exchange: req.body.exchange || 'NFO',
+                quantity: req.body.quantity || 1
+            }
+
+            const response = await placeNiftyFutureLimitBuyWithStopLoss({
+                ...payload
+            });
+
+            if (response) {
                 return res.status(200).json({ success: true, data: response });
             }
             else {
@@ -76,4 +106,6 @@ module.exports = {
             res.status(500).json({ success: false, error: error.message });
         }
     }
+
+
 }

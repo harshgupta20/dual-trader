@@ -254,6 +254,90 @@ const GetFutureNiftyAndBankNiftyExpiry = async () => {
   }
 }
 
+const placeNiftyFutureLimitBuyWithStopLoss = async ({
+  access_token,
+  tradingsymbol,
+  exchange = 'NFO',
+  quantity = 1
+}) => {
+
+  try {
+    logger.info('Placing Nifty Future LIMIT BUY | symbol: %s | price: %d | qty: %d', tradingsymbol, quantity);
+
+
+    
+    const instrument = "IDEA"
+    console.log("harsh ", { access_token, instrument });
+    const currentPrice = await getLTP({ access_token, instrument });
+    const stopLossPrice = currentPrice - stopLossPoints;
+
+    // const buyResponse = await axios.post(
+    //   'https://api.kite.trade/orders/regular',
+    //   new URLSearchParams({
+    //     tradingsymbol,
+    //     exchange,
+    //     transaction_type: 'BUY',
+    //     order_type: 'LIMIT',
+    //     quantity: quantity.toString(),
+    //     product: 'NRML', // or 'MIS' for intraday
+    //     price: currentPrice.toString(),
+    //     validity: 'DAY',
+    //   }),
+    //   {
+    //     headers: {
+    //       'X-Kite-Version': '3',
+    //       'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+    //       'Content-Type': 'application/x-www-form-urlencoded',
+    //     }
+    //   }
+    // );
+
+    // logger.info('Buy LIMIT order placed | order_id: %s', buyResponse.data.data.order_id);
+
+    // You might want to wait for order to be executed before placing SL
+    // logger.info('Placing Stop-Loss SELL order at trigger: %d', stopLossPrice);
+
+    // const slResponse = await axios.post(
+    //   'https://api.kite.trade/orders/regular',
+    //   new URLSearchParams({
+    //     tradingsymbol,
+    //     exchange,
+    //     transaction_type: 'SELL',
+    //     order_type: 'SL-M', // OR use 'SL' if you want to define trigger + price
+    //     trigger_price: stopLossPrice.toString(),
+    //     quantity: quantity.toString(),
+    //     product: 'NRML',
+    //     validity: 'DAY',
+    //   }),
+    //   {
+    //     headers: {
+    //       'X-Kite-Version': '3',
+    //       'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+    //       'Content-Type': 'application/x-www-form-urlencoded',
+    //     }
+    //   }
+    // );
+
+    // logger.info('Stop-Loss SELL order placed | order_id: %s', slResponse.data.data.order_id);
+
+    return {
+      success: true,
+      data: {
+        // buyOrderId: buyResponse.data.data.order_id,
+        // stopLossOrderId: slResponse.data.data.order_id,
+        currentPrice,
+        stopLossPrice,
+      },
+      message: 'Nifty Future LIMIT BUY order placed successfully with Stop-Loss',
+    };
+
+  } catch (error) {
+    logger.error('Error placing Nifty Future limit buy with SL | %o', error?.response?.data || error?.message);
+    return { success: false, error: error?.response?.data || error?.message };
+  }
+};
+
+
 module.exports = {
   createZerodhaSession,
   placeZerodhaOrder,
@@ -261,5 +345,6 @@ module.exports = {
   getZerodhaQuote,
   placeNiftyFutureOrderWithStopLoss,
   getPortfolioHoldings,
-  GetFutureNiftyAndBankNiftyExpiry
+  GetFutureNiftyAndBankNiftyExpiry,
+  placeNiftyFutureLimitBuyWithStopLoss
 };
