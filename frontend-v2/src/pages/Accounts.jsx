@@ -34,7 +34,7 @@ const Accounts = () => {
             <Box className="flex flex-col gap-4 p-4">
                 {
                     ACCOUNTS.map((account, index) => (
-                        <AccountCard key={index} account={account} />
+                        <AccountCard index={index} account={account} />
                     ))
                 }
             </Box>

@@ -22,26 +22,37 @@ const AddAccountDialog = ({ open, onClose }) => {
   ];
 
   const [accountKey, setAccountKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
   const [accountType] = useState('zerodha'); // Fixed to Zerodha
-  const [error, setError] = useState(false);
+
+  const [errors, setErrors] = useState({
+    accountKey: false,
+    apiSecret: false
+  });
 
   const handleClose = () => {
     setAccountKey('');
-    setError(false);
+    setApiSecret('');
+    setErrors({ accountKey: false, apiSecret: false });
     onClose();
   };
 
   const handleSubmit = () => {
-    if (!accountKey.trim()) {
-      setError(true);
-      return;
-    }
+    const hasError = {
+      accountKey: !accountKey.trim(),
+      apiSecret: !apiSecret.trim()
+    };
 
-    console.log('Submitted:', { accountKey, accountType });
+    setErrors(hasError);
 
-    // Reset state and close
+    if (hasError.accountKey || hasError.apiSecret) return;
+
+    console.log('Submitted:', { accountKey, apiSecret, accountType });
+
+    // Reset and close
     setAccountKey('');
-    setError(false);
+    setApiSecret('');
+    setErrors({ accountKey: false, apiSecret: false });
     onClose();
   };
 
@@ -77,10 +88,30 @@ const AddAccountDialog = ({ open, onClose }) => {
             value={accountKey}
             onChange={(e) => {
               setAccountKey(e.target.value);
-              if (e.target.value.trim()) setError(false);
+              if (e.target.value.trim()) {
+                setErrors(prev => ({ ...prev, accountKey: false }));
+              }
             }}
-            error={error}
-            helperText={error ? 'Account Key is required' : ''}
+            error={errors.accountKey}
+            helperText={errors.accountKey ? 'Account Key is required' : ''}
+          />
+
+          <TextField
+            margin="dense"
+            id="apiSecret"
+            label="API Secret"
+            type="text"
+            fullWidth
+            variant="standard"
+            value={apiSecret}
+            onChange={(e) => {
+              setApiSecret(e.target.value);
+              if (e.target.value.trim()) {
+                setErrors(prev => ({ ...prev, apiSecret: false }));
+              }
+            }}
+            error={errors.apiSecret}
+            helperText={errors.apiSecret ? 'API Secret is required' : ''}
           />
         </Box>
       </DialogContent>
