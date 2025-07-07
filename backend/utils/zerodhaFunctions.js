@@ -9,16 +9,16 @@ const csv = require('csv-parser');
 const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT2_API_KEY;
 const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT2_API_SECRET;
 
-const createZerodhaSession = async ({ request_token }) => {
+const createZerodhaSession = async ({ api_key, request_token, api_secret }) => {
   try {
     logger.info('Initiating Zerodha session creation | request_token: %s', request_token);
 
-    const checksum = await generateSHA256Checksum(ZERODHA_ACCOUNT1_API_KEY + request_token + ZERODHA_ACCOUNT1_API_SECRET);
+    const checksum = await generateSHA256Checksum(api_key + request_token + api_secret);
     logger.debug('Generated checksum: %s', checksum);
 
     const response = await axios.post('https://api.kite.trade/session/token',
       new URLSearchParams({
-        api_key: ZERODHA_ACCOUNT1_API_KEY,
+        api_key: api_key,
         request_token,
         checksum,
       }),
@@ -230,7 +230,7 @@ const GetFutureNiftyAndBankNiftyExpiry = async () => {
       response.data
         .pipe(csv())
         .on('data', (data) => {
-          let isNiftyOrBankNifty = (data) => (data?.name?.toLowerCase() === 'banknifty' || data?.name?.toLowerCase() === 'nifty');
+          let isNiftyOrBankNifty = (data) => (data?.name?.toLowerCase() === 'nifty');
           let isInstrumentTypeFuture = (data) => (data?.instrument_type?.toLowerCase() === 'fut');
           let isExchangeNFO = (data) => (data?.exchange?.toLowerCase() === 'nfo');
           let isSegmentFutures = (data) => (data?.segment === 'NFO-FUT');
@@ -269,7 +269,6 @@ const placeNiftyFutureLimitBuyWithStopLoss = async ({
     
     const instrument = `NFO:${tradingsymbol}`;
     const stopLossPoints = 100;
-    console.log("harsh ", { access_token, instrument });
     const currentPrice = await getLTP({ access_token, instrument });
     
     if(currentPrice === undefined || currentPrice === null || !currentPrice) {
@@ -280,7 +279,6 @@ const placeNiftyFutureLimitBuyWithStopLoss = async ({
     // Calculate stop loss price for BUY order
     const stopLossPrice = currentPrice - stopLossPoints;
 
-    console.log("harsh currentPrice ", currentPrice, " stopLossPrice ", stopLossPrice, " access_token ", access_token);
 
     // const buyResponse = await axios.post(
     //   'https://api.kite.trade/orders/regular',

@@ -7,33 +7,34 @@ require('dotenv').config();
 module.exports = {
     login: async (req, res) => {
         try {
-            const { request_token, account_type } = req.body;
+            const { api_key, api_secret, request_token, account_type } = req.body;
 
             if (!request_token) {
                 return res.status(400).send('request_token is required');
             }
 
-            let ZERODHA_ACCOUNT_API_KEY;
-            let ZERODHA_ACCOUNT_API_SECRET;
-            let zerodha_checksum;
+            // let ZERODHA_ACCOUNT_API_KEY;
+            // let ZERODHA_ACCOUNT_API_SECRET;
+            // let zerodha_checksum;
 
-            if(account_type === "account1"){
-                ZERODHA_ACCOUNT_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
-                ZERODHA_ACCOUNT_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
-                zerodha_checksum = await generateSHA256Checksum(ZERODHA_ACCOUNT_API_KEY + request_token + ZERODHA_ACCOUNT_API_SECRET);
-            }
-            else if(account_type === "account2"){
-                ZERODHA_ACCOUNT_API_KEY = process.env.ZERODHA_ACCOUNT2_API_KEY;
-                ZERODHA_ACCOUNT_API_SECRET = process.env.ZERODHA_ACCOUNT2_API_SECRET;
-                zerodha_checksum = await generateSHA256Checksum(ZERODHA_ACCOUNT_API_KEY + request_token + ZERODHA_ACCOUNT_API_SECRET);
-            }
+            // if(account_type === "account1"){
+            //     ZERODHA_ACCOUNT_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
+            //     ZERODHA_ACCOUNT_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
+            // }
+            // else if(account_type === "account2"){
+            //     ZERODHA_ACCOUNT_API_KEY = process.env.ZERODHA_ACCOUNT2_API_KEY;
+            //     ZERODHA_ACCOUNT_API_SECRET = process.env.ZERODHA_ACCOUNT2_API_SECRET;
+            //     zerodha_checksum = await generateSHA256Checksum(ZERODHA_ACCOUNT_API_KEY + request_token + ZERODHA_ACCOUNT_API_SECRET);
+            // }
 
+            let zerodha_checksum = await generateSHA256Checksum(api_key + request_token + api_secret);
             const zerodha_api_body = {
-                api_key: ZERODHA_ACCOUNT_API_KEY,
+                api_key: api_key,
                 request_token: request_token,
                 checksum: zerodha_checksum
             }
 
+            console.log("harsh zerodha_api_body", zerodha_api_body, api_secret);
             // const response = await axios.post(ZERODHA_API_DEFINITIONS.GET_ACCESS_TOKEN.URL, zerodha_api_body);
             const response = await axios.post(
                 ZERODHA_API_DEFINITIONS.GET_ACCESS_TOKEN.URL,
@@ -77,7 +78,7 @@ module.exports = {
             return res.status(response?.data?.status).send(response?.data?.message);
         }
         catch (error) {
-            console.log("Error in zerodha login ->", error);
+            console.log("Error in zerodha login ->", error?.message);
             res.status(500).send(error.message);
         }
     }

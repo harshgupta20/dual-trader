@@ -18,6 +18,8 @@
     "@mui/styled-engine-sc": "^7.2.0",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
+    "firebase": "^11.10.0",
+    "moment": "^2.30.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",
@@ -33,6 +35,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vite-plugin-pwa": "^1.0.1"
   }
 }

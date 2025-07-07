@@ -1,26 +1,28 @@
 import { Box, Button } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import AddAccountDialog from '../components/accounts/AddAccountDialog'
 import AccountCard from '../components/accounts/AccountCard';
+import { AccountsContext } from '../context/AccountContext';
 
 const Accounts = () => {
 
     const [openAddAccountDialog, setOpenAddAccountDialog] = useState(false);
+    const { accounts, setAccounts } = useContext(AccountsContext);
 
-    const ACCOUNTS = [
-        {
-            name: "John",
-            email: "john@gmail.com",
-            broker: "Zerodha",
-            accountKey: "1234567890"
-        },
-        {
-            name: "Jane",
-            email: "jane@gmail.com",
-            broker: "Grow",
-            accountKey: "0987654321"
-        }
-    ]
+    // const ACCOUNTS = [
+    //     {
+    //         name: "John",
+    //         email: "john@gmail.com",
+    //         broker: "Zerodha",
+    //         accountKey: "1234567890"
+    //     },
+    //     {
+    //         name: "Jane",
+    //         email: "jane@gmail.com",
+    //         broker: "Grow",
+    //         accountKey: "0987654321"
+    //     }
+    // ]
 
     return (
         <Box>
@@ -32,11 +34,9 @@ const Accounts = () => {
 
 
             <Box className="flex flex-col gap-4 p-4">
-                {
-                    ACCOUNTS.map((account, index) => (
-                        <AccountCard index={index} account={account} />
-                    ))
-                }
+                {Object.keys(accounts)?.map((account, index) => (
+                    <AccountCard index={index} account={accounts[account]} />
+                ))}
             </Box>
 
 

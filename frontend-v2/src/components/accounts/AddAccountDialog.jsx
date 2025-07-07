@@ -45,8 +45,47 @@ const AddAccountDialog = ({ open, onClose }) => {
 
     setErrors(hasError);
 
-    if (hasError.accountKey || hasError.apiSecret) return;
+    if (hasError.accountKey || hasError.apiSecret) {
+      return;
+    }
+    else {
+      const accounts = localStorage.getItem("accounts");
+      if (accounts) {
+        // Check if apikey data exist
+        const isAccountExist = Object.keys(JSON.parse(accounts)).includes(accountKey);
 
+        // If account dont exist then save the data in local.
+        if (!isAccountExist) {
+          let parsedAccounts = {...JSON.parse(accounts)};
+          parsedAccounts[accountKey] = {
+            accountKey,
+            accountType,
+            apiSecret
+          };
+          localStorage.setItem("accounts", JSON.stringify(parsedAccounts));
+        }
+      }
+      else{
+        // If accounts not exist then create a new object and save the data in local.
+        const newAccounts = {
+          [accountKey]: {
+            accountKey,
+            accountType,
+            apiSecret
+          }
+        };
+        localStorage.setItem("accounts", JSON.stringify(newAccounts));
+      };
+
+      if (accountType === "zerodha") {
+        let redirectUrl = null;
+        redirectUrl = `https://kite.zerodha.com/connect/login?v=3&api_key=${accountKey}`;
+        window.location.href = redirectUrl;
+      }
+      else{
+        alert("This account type is not supported yet.");
+      }
+    };
     console.log('Submitted:', { accountKey, apiSecret, accountType });
 
     // Reset and close
