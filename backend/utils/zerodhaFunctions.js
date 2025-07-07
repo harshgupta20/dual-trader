@@ -3,8 +3,11 @@ const axios = require('axios');
 const logger = require('./winstonLogger');
 const csv = require('csv-parser');
 
-const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
-const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
+// const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
+// const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
+
+const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT2_API_KEY;
+const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT2_API_SECRET;
 
 const createZerodhaSession = async ({ request_token }) => {
   try {
@@ -146,7 +149,7 @@ const getLTP = async ({ access_token, instrument }) => {
       },
     });
 
-    const ltp = response.data?.data?.[instrument]?.last_price;
+    const ltp = response.data?.data?.[instrument]?.last_price || null;
     logger.info('LTP received | instrument: %s | price: %d', instrument, ltp);
 
     return ltp;
@@ -263,13 +266,21 @@ const placeNiftyFutureLimitBuyWithStopLoss = async ({
 
   try {
     logger.info('Placing Nifty Future LIMIT BUY | symbol: %s | price: %d | qty: %d', tradingsymbol, quantity);
-
-
     
-    const instrument = "IDEA"
+    const instrument = `NFO:${tradingsymbol}`;
+    const stopLossPoints = 100;
     console.log("harsh ", { access_token, instrument });
     const currentPrice = await getLTP({ access_token, instrument });
+    
+    if(currentPrice === undefined || currentPrice === null || !currentPrice) {
+      throw new Error('Failed to fetch current price');
+    }
+
+    logger.debug('Current price fetched | instrument: %s | price: %d', instrument, currentPrice);
+    // Calculate stop loss price for BUY order
     const stopLossPrice = currentPrice - stopLossPoints;
+
+    console.log("harsh currentPrice ", currentPrice, " stopLossPrice ", stopLossPrice, " access_token ", access_token);
 
     // const buyResponse = await axios.post(
     //   'https://api.kite.trade/orders/regular',
@@ -279,44 +290,46 @@ const placeNiftyFutureLimitBuyWithStopLoss = async ({
     //     transaction_type: 'BUY',
     //     order_type: 'LIMIT',
     //     quantity: quantity.toString(),
-    //     product: 'NRML', // or 'MIS' for intraday
+    //     product: "MIS", // or 'MIS' for intraday
     //     price: currentPrice.toString(),
     //     validity: 'DAY',
     //   }),
     //   {
     //     headers: {
     //       'X-Kite-Version': '3',
-    //       'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
+    //       'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
     //       'Content-Type': 'application/x-www-form-urlencoded',
     //     }
     //   }
     // );
+
 
     // logger.info('Buy LIMIT order placed | order_id: %s', buyResponse.data.data.order_id);
+    // console.log("harsh bought future ", buyResponse);
 
     // You might want to wait for order to be executed before placing SL
-    // logger.info('Placing Stop-Loss SELL order at trigger: %d', stopLossPrice);
+    logger.info('Placing Stop-Loss SELL order at trigger: %d', stopLossPrice);
 
-    // const slResponse = await axios.post(
-    //   'https://api.kite.trade/orders/regular',
-    //   new URLSearchParams({
-    //     tradingsymbol,
-    //     exchange,
-    //     transaction_type: 'SELL',
-    //     order_type: 'SL-M', // OR use 'SL' if you want to define trigger + price
-    //     trigger_price: stopLossPrice.toString(),
-    //     quantity: quantity.toString(),
-    //     product: 'NRML',
-    //     validity: 'DAY',
-    //   }),
-    //   {
-    //     headers: {
-    //       'X-Kite-Version': '3',
-    //       'Authorization': `token ${ZERODHA_API_KEY}:${access_token}`,
-    //       'Content-Type': 'application/x-www-form-urlencoded',
-    //     }
-    //   }
-    // );
+    const slResponse = await axios.post(
+      'https://api.kite.trade/orders/regular',
+      new URLSearchParams({
+        tradingsymbol,
+        exchange,
+        transaction_type: 'SELL',
+        order_type: 'SL-M', // OR use 'SL' if you want to define trigger + price
+        trigger_price: "25540",
+        quantity: quantity.toString(),
+        product: 'MIS',
+        validity: 'DAY',
+      }),
+      {
+        headers: {
+          'X-Kite-Version': '3',
+          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      }
+    );
 
     // logger.info('Stop-Loss SELL order placed | order_id: %s', slResponse.data.data.order_id);
 
@@ -324,7 +337,7 @@ const placeNiftyFutureLimitBuyWithStopLoss = async ({
       success: true,
       data: {
         // buyOrderId: buyResponse.data.data.order_id,
-        // stopLossOrderId: slResponse.data.data.order_id,
+        stopLossOrderId: slResponse.data.data.order_id,
         currentPrice,
         stopLossPrice,
       },
