@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Accounts from "./pages/Accounts";
-import HedgeFuture from "./pages/HedgeFuture";
+import BuySellFuture from "./pages/BuySellFuture";
 import HeaderComponent from "./components/HeaderComponent";
 import { AccountsContext } from "./context/AccountContext";
 import { useEffect, useState } from "react";
@@ -35,7 +35,7 @@ const App = () => {
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/accounts/auth/callback" element={<AccountCallback />} />
 
-            <Route path="/hedge-future" element={<HedgeFuture />} />
+            <Route path="/buy-sell-future" element={<BuySellFuture />} />
           </Routes>
         </div>
         <div className="">
