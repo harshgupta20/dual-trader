@@ -20,6 +20,10 @@ Traditional brokers restrict users from placing simultaneous buy and sell orders
 
 ## 🛠️ Tech Stack
 
+- **UI Flow (Using Excelidraw.com)** 
+[Download Guide](https://raw.githubusercontent.com/harshgupta20/dual-trader/main/dual-trader-ui-flow.excalidraw)
+
+
 - **Frontend**: React + Vite + Tailwind CSS
 - **PWA**: Installable on mobile and desktop
 - **Backend/DB**: Firebase (Firestore/Realtime DB + Auth)
