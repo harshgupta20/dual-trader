@@ -2,7 +2,7 @@ import { Box, Button, Card, CardContent, Typography } from '@mui/material';
 import AccountsListDialog from '../components/AccountsListDialog';
 import { useState } from 'react';
 import SimpleAccountCardUI from '../components/SimpleProfileCard';
-import TradingForm from '../components/BuySellFuture2Account';
+import TradingForm from '../components/BuySellFutureTwoAccounts';
 
 const BuySellFuture = () => {
   const [showAccountsDialog, setShowAccountsDialog] = useState(false);

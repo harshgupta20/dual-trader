@@ -9,7 +9,6 @@ const AccountsListDialog = ({ open, onClick, close }) => {
             const storedAccounts = localStorage.getItem("accounts");
             if (storedAccounts) {
                 const parsed = JSON.parse(storedAccounts);
-                console.log("harsh accounts", parsed);
                 setAccounts(Object.values(parsed)); // convert object to array
             }
         } catch (error) {

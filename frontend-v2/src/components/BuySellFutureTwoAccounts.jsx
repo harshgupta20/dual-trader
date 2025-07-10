@@ -12,12 +12,14 @@ import {
     FormControl,
     InputLabel
 } from '@mui/material';
+import ResultDialog from './buySellFuture/ResultDialog';
 
 const TradingForm = ({ account1, account2 }) => {
     const [futurePrice] = useState(12345); // just display
     const [selectedFuture, setSelectedFuture] = useState('');
     const [quantity, setQuantity] = useState('');
     const [errors, setErrors] = useState({});
+    const [showResultDialog, setShowResultDialog] = useState({ show: false });
 
     const [accountData, setAccountData] = useState({
         account1: { action: 'BUY', price: '', stopLoss: '' },
@@ -107,6 +109,8 @@ const TradingForm = ({ account1, account2 }) => {
 
         console.log('Executing Order:', payload);
         // Add API call logic here
+
+        setShowResultDialog(prev => ({ ...prev, show: true }));
     };
 
     return (
@@ -196,6 +200,12 @@ const TradingForm = ({ account1, account2 }) => {
             >
                 Execute Order
             </Button>
+
+
+            {showResultDialog?.show && <ResultDialog
+                open={showResultDialog.show} // Replace with actual state to control dialog visibility
+                close={() => setShowResultDialog(prev => ({ ...prev, show: false }))} // Replace with actual close handler
+            />}
         </Box>
     );
 };
