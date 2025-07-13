@@ -6,6 +6,7 @@ import HeaderComponent from "./components/HeaderComponent";
 import { AccountsContext } from "./context/AccountContext";
 import { useEffect, useState } from "react";
 import AccountCallback from "./pages/AccountCallback";
+import Home from "./pages/Home";
 
 const App = () => {
   const [accounts, setAccounts] = useState([]);
@@ -32,6 +33,7 @@ const App = () => {
         <HeaderComponent />
         <div className="flex flex-col min-h-0 flex-1 grow overflow-scroll">
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/accounts/auth/callback" element={<AccountCallback />} />
 
