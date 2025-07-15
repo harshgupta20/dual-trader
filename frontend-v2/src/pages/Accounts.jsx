@@ -40,7 +40,7 @@ const Accounts = () => {
             </Box>
 
 
-            {openAddAccountDialog && <AddAccountDialog open={openAddAccountDialog} onClose={() => setOpenAddAccountDialog(false)} />}
+            {openAddAccountDialog && <AddAccountDialog mode="add" open={openAddAccountDialog} onClose={() => setOpenAddAccountDialog(false)} />}
         </Box>
     )
 }

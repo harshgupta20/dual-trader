@@ -4,6 +4,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import { useContext, useState } from 'react';
 import { AccountsContext } from '../../context/AccountContext';
 import moment from 'moment/moment';
+import AddAccountDialog from './AddAccountDialog';
 
 const InfoRow = ({ label, value }) => {
     const [copied, setCopied] = useState(false);
@@ -35,6 +36,7 @@ const InfoRow = ({ label, value }) => {
 
 const AccountCard = ({ account, index }) => {
     const { setAccounts } = useContext(AccountsContext);
+    const [reAuthorizeAccountModal, setReAuthorizeAccountModal] = useState(false);
 
     const handleLogout = () => {
         console.log('Logged out');
@@ -68,8 +70,12 @@ const AccountCard = ({ account, index }) => {
 
             <Box className='flex flex-col gap-2 mt-4'>
                 <Button onClick={handleRemoveAccount} fullWidth variant="contained" color="error">Remove Account</Button>
-                <Button onClick={handleLogout} fullWidth variant="outlined" color="error">Logout</Button>
+                <Button onClick={() => setReAuthorizeAccountModal(true)} fullWidth variant="contained" color="success">Re-Authorize Account</Button>
+                {/* <Button onClick={handleLogout} fullWidth variant="outlined" color="error">Logout</Button> */}
             </Box>
+
+
+            {reAuthorizeAccountModal && <AddAccountDialog mode="reauthorize" propAccountKey={account?.accountKey} propApiSecret={account?.apiSecret} open={reAuthorizeAccountModal} onClose={() => setReAuthorizeAccountModal(false)} />}
         </Box>
     );
 };

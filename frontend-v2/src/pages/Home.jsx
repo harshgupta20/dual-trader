@@ -41,7 +41,7 @@ const Home = () => {
         </Typography>
         <ul className="space-y-4 text-sm text-gray-700">
           <li>✅ Real-time LTP tracking & future price analytics</li>
-          <li>✅ Instant hedge execution across multiple accounts</li>
+          <li>✅ Instant Buy/Sell execution across multiple accounts</li>
           <li>✅ Powerful yet minimal UI for serious traders</li>
           <li>✅ Fully secure. Data never leaves your device.</li>
         </ul>

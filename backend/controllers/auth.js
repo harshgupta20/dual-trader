@@ -2,6 +2,7 @@ const axios = require('axios');
 const ZERODHA_API_DEFINITIONS = require('../utils/zerodhaApi');
 const { generateSHA256Checksum } = require('../utils/helperFunction');
 const { signToken } = require('../utils/jwt');
+const { createZerodhaSession } = require('../utils/zerodhaFunctions');
 require('dotenv').config();
 
 module.exports = {
@@ -13,40 +14,8 @@ module.exports = {
                 return res.status(400).send('request_token is required');
             }
 
-            // let ZERODHA_ACCOUNT_API_KEY;
-            // let ZERODHA_ACCOUNT_API_SECRET;
-            // let zerodha_checksum;
-
-            // if(account_type === "account1"){
-            //     ZERODHA_ACCOUNT_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
-            //     ZERODHA_ACCOUNT_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
-            // }
-            // else if(account_type === "account2"){
-            //     ZERODHA_ACCOUNT_API_KEY = process.env.ZERODHA_ACCOUNT2_API_KEY;
-            //     ZERODHA_ACCOUNT_API_SECRET = process.env.ZERODHA_ACCOUNT2_API_SECRET;
-            //     zerodha_checksum = await generateSHA256Checksum(ZERODHA_ACCOUNT_API_KEY + request_token + ZERODHA_ACCOUNT_API_SECRET);
-            // }
-
-            let zerodha_checksum = await generateSHA256Checksum(api_key + request_token + api_secret);
-            const zerodha_api_body = {
-                api_key: api_key,
-                request_token: request_token,
-                checksum: zerodha_checksum
-            }
-
-            console.log("harsh zerodha_api_body", zerodha_api_body, api_secret);
-            // const response = await axios.post(ZERODHA_API_DEFINITIONS.GET_ACCESS_TOKEN.URL, zerodha_api_body);
-            const response = await axios.post(
-                ZERODHA_API_DEFINITIONS.GET_ACCESS_TOKEN.URL,
-                new URLSearchParams(zerodha_api_body),
-                {
-                    headers: {
-                        'X-Kite-Version': '3',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                }
-            );
-
+            const response = await createZerodhaSession({api_key, api_secret, request_token});
+            
             if (response?.data?.status === "success") {
                 const userInfo = {
                     user_type: response.data.data.user_type,

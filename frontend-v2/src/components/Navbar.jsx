@@ -10,7 +10,7 @@ export default function Navbar() {
     const [value, setValue] = useState(null);
 
     const NAVBAR_OPTIONS = [
-        { label: 'Hedge Future', path: '/buy-sell-future' },
+        { label: 'Buy/Sell Future', path: '/buy-sell-future' },
         { label: 'Accounts', path: '/accounts' },
     ];
 
