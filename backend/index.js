@@ -24,7 +24,13 @@ const apiLimiter = rateLimit({
 
 app.set('trust proxy', true);
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [process.env.FRONTEND_BASE_URL, process.env.BACKEND_BASE_URL],
+  credentials: true,
+  allowedHeaders: ['Authorization', 'Content-Type'],
+  methods: ['GET', 'POST'],
+}));
+
 
 app.use(apiLimiter); // ✅ Apply rate limit to all routes
 
