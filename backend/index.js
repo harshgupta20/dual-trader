@@ -22,8 +22,10 @@ const apiLimiter = rateLimit({
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
 });
 
+app.set('trust proxy', true);
 app.use(express.json());
 app.use(cors());
+
 app.use(apiLimiter); // ✅ Apply rate limit to all routes
 
 // Routers
