@@ -22,7 +22,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    // Fetch accounts from API or local storage
+    // Fetch accounts from API or local storage 
     fetchAccounts();
   }, []);
 
