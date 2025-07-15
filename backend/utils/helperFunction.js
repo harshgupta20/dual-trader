@@ -1,3 +1,5 @@
+const crypto = require('crypto'); // CommonJS
+
 async function generateSHA256Checksum(input) {
   const encoder = new TextEncoder();
   const data = encoder.encode(input);
