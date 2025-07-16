@@ -74,7 +74,7 @@ const AccountCallback = () => {
             console.log('Proceeding with Account Key:', { accountKey, requestToken: urlQuery?.requestToken });
         }
         catch (error) {
-            console.error('Error during login:', error);
+            console.error('Error during login:', error?.message);
             setError(true);
             // Optionally, show an error message to the user
             alert('An error occurred during login. Please try again later.');

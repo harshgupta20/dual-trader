@@ -10,25 +10,25 @@ export default defineConfig({
     includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
     manifest: {
       name: 'Dual Trader',
-      short_name: 'PWA',
-      description: 'My Progressive Web App built with Vite + React',
-      theme_color: '#ffffff',
+      short_name: 'DT By Ash',
+      description: 'Non-Profit Experimental Trading Platform',
+      theme_color: '#4299e1',
       background_color: '#ffffff',
       display: 'standalone',
       start_url: '/',
       icons: [
         {
-          src: '/pwa-192x192.png',
+          src: '/assets/dual-trader-logo.jpg',
           sizes: '192x192',
           type: 'image/png'
         },
         {
-          src: '/pwa-512x512.png',
+          src: '/assets/dual-trader-logo.jpg',
           sizes: '512x512',
           type: 'image/png'
         },
         {
-          src: '/pwa-512x512.png',
+          src: '/assets/dual-trader-logo.jpg',
           sizes: '512x512',
           type: 'image/png',
           purpose: 'any maskable'
