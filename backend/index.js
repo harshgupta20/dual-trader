@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit'); // ✅ Import rate limiter
 const authRouter = require("./routers/auth");
 const userRouter = require("./routers/user");
 const tradeRouter = require("./routers/trade");
+const dataRouter = require("./routers/data");
 const logger = require('./utils/winstonLogger');
 require('dotenv').config();
 
@@ -38,6 +39,7 @@ app.use(apiLimiter); // ✅ Apply rate limit to all routes
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/trade", tradeRouter);
+app.use("/data", dataRouter);
 
 // LOGGER
 app.use((req, res, next) => {

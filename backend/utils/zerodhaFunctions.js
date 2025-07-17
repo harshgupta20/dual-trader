@@ -138,34 +138,41 @@ const getZerodhaQuote = async ({ access_token, instruments }) => {
   }
 };
 
-const getLTP = async ({ access_token, instrument }) => {
+const getLTP = async ({ api_key, access_token, instruments = [] }) => {
   try {
-    logger.info('Getting LTP | instrument: %s', instrument);
+    logger.info('Getting LTP | instrument: %s', instruments);
 
-    const response = await axios.get(`https://api.kite.trade/quote?i=${instrument}`, {
+    const instrumentsQuery = instruments.map(i => `i=${encodeURIComponent(i)}`).join('&');
+
+    const response = await axios.get(`https://api.kite.trade/quote/ohlc?${instrumentsQuery}`, {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
+        'Authorization': `token ${api_key}:${access_token}`,
       },
     });
 
-    const ltp = response.data?.data?.[instrument]?.last_price || null;
-    logger.info('LTP received | instrument: %s | price: %d', instrument, ltp);
 
-    return ltp;
+    if (response?.data?.status !== "success") {
+      logger.warn('No data received for instruments: %s', instruments);
+      return { success: false, message: response?.data?.message || 'No data received' };
+    }
+
+    logger.info('LTP received | instrument: %s | price: %d', instruments);
+
+    return { success: true, data: response?.data?.data || null };
   } catch (error) {
-    logger.error('LTP fetch failed | instrument: %s | error: %o', instrument, error.response?.data || error.message);
+    logger.error('LTP fetch failed | instrument: %s | error: %o', instruments, error.response?.data || error.message);
     throw new Error('Failed to fetch LTP');
   }
 };
 
-const placeNiftyFutureOrderWithStopLoss = async ({ access_token }) => {
+const placeNiftyFutureOrderWithStopLoss = async ({ api_key, access_token }) => {
   const instrument = 'NFO:NIFTY23JUNFUT';
 
   try {
     logger.info('Placing Nifty Future order with SL | instrument: %s', instrument);
 
-    const currentPrice = await getLTP({ access_token, instrument });
+    const currentPrice = await getLTP({ api_key, access_token, instruments: [instrument] });
     const stopLossPrice = currentPrice - 100;
 
     logger.debug('Calculated stop loss | currentPrice: %d | stopLoss: %d', currentPrice, stopLossPrice);
@@ -184,7 +191,7 @@ const placeNiftyFutureOrderWithStopLoss = async ({ access_token }) => {
       {
         headers: {
           'X-Kite-Version': '3',
-          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
+          'Authorization': `token ${api_key}:${access_token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
@@ -266,12 +273,12 @@ const placeNiftyFutureLimitBuyWithStopLoss = async ({
 
   try {
     logger.info('Placing Nifty Future LIMIT BUY | symbol: %s | price: %d | qty: %d', tradingsymbol, quantity);
-    
+
     const instrument = `NFO:${tradingsymbol}`;
     const stopLossPoints = 100;
-    const currentPrice = await getLTP({ access_token, instrument });
-    
-    if(currentPrice === undefined || currentPrice === null || !currentPrice) {
+    const currentPrice = await getLTP({ access_token, instruments: [instrument] });
+
+    if (currentPrice === undefined || currentPrice === null || !currentPrice) {
       throw new Error('Failed to fetch current price');
     }
 
@@ -357,5 +364,6 @@ module.exports = {
   placeNiftyFutureOrderWithStopLoss,
   getPortfolioHoldings,
   GetFutureNiftyAndBankNiftyExpiry,
-  placeNiftyFutureLimitBuyWithStopLoss
+  placeNiftyFutureLimitBuyWithStopLoss,
+  getLTP
 };
