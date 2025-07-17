@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useEffect, useState } from 'react';
+import axiosInstance from '../utils/axios';
 
 const HeaderComponent = () => {
   const [prices, setPrices] = useState({
@@ -36,6 +37,11 @@ const HeaderComponent = () => {
     'SBIN',
     'ITC'
   ]);
+
+  // TODO: Get latest price
+  // const handleGetLatestPrice = async (symbols) => {
+  //   const response = await axiosInstance.post('/data/instruments-ltp', {})
+  // }
 
   useEffect(() => {
     const interval = setInterval(() => {

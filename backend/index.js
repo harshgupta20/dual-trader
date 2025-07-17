@@ -1,12 +1,15 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const cron = require('node-cron');
+const moment = require('moment-timezone');
 const rateLimit = require('express-rate-limit'); // ✅ Import rate limiter
 const authRouter = require("./routers/auth");
 const userRouter = require("./routers/user");
 const tradeRouter = require("./routers/trade");
 const dataRouter = require("./routers/data");
 const logger = require('./utils/winstonLogger');
+const { sendMail } = require('./utils/emailService');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3000;
@@ -60,6 +63,28 @@ app.get('/', (req, res) => {
     success: true
   });
 });
+
+// Schedule: Run every minute, but only act at 9:30 AM IST
+// cron.schedule('* * * * *', () => {
+//   try {
+//     console.log("Running cron job at:", moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'));
+//     const now = moment().tz('Asia/Kolkata');
+//     if (now.hour() === 1 && now.minute() === 20) {
+//       const currentTimeIST = moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
+//       const emailTemplate = require('./utils/emailTemplates/serverUpNotification')();
+//       sendMail(process.env.GMAIL_EMAIL, emailTemplate.subject, emailTemplate.html, process.env.GMAIL_CC_EMAIL2, process.env.GMAIL_EMAIL)
+//       console.log(`✅ Cron Job running at ${currentTimeIST} IST`);
+//     }
+//   } catch (error) {
+//     console.error('Error in cron job:', error);
+//     logger.error('Error in cron job: %s', error.message);
+//     const errorEmailTemplate = require('./utils/emailTemplates/cronErrorNotification')(error);
+//     sendMail(process.env.GMAIL_EMAIL, "Cron Job Error", "Server is not running and crashed.", process.env.GMAIL_CC_EMAIL2, process.env.GMAIL_EMAIL)
+//     console.error('Error email sent:', errorEmailTemplate.subject);
+//     logger.error('Error email sent: %s', errorEmailTemplate.subject);
+//   }
+// });
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
