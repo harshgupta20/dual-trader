@@ -59,7 +59,7 @@ const HeaderComponent = () => {
 
   const getColor = (symbol) => {
     if (prices[symbol] > previousPrices[symbol]) return 'text-green-400';
-    if (prices[symbol] < previousPrices[symbol]) return 'text-red-900';
+    if (prices[symbol] < previousPrices[symbol]) return 'text-red-400';
     return 'text-white';
   };
 
@@ -69,7 +69,7 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <Box className="bg-blue-500 text-white w-full p-2 shadow-md">
+      <Box className="bg-black text-white w-full p-2 shadow-md">
         <Box className="flex items-center justify-between max-w-md mx-auto">
           <Box className="flex gap-6">
             {Object.keys(prices).map((symbol) => (
