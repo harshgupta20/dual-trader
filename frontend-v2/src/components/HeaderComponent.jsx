@@ -69,12 +69,12 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <Box className="bg-black text-white w-full p-2 shadow-md">
+      <Box bgcolor={'primary.main'} className="w-full p-2 shadow-md">
         <Box className="flex items-center justify-between max-w-md mx-auto">
           <Box className="flex gap-6">
             {Object.keys(prices).map((symbol) => (
               <Box key={symbol} className="flex flex-col items-center">
-                <Typography variant="caption" className="text-xs font-semibold">{symbol}</Typography>
+                <Typography variant="caption" className="text-xs text-white font-semibold">{symbol}</Typography>
                 <Typography variant="body1" className={`font-bold ${getColor(symbol)}`}>
                   {prices[symbol]}
                 </Typography>
