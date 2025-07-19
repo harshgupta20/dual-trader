@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import ResultDialog from './buySellFuture/ResultDialog';
 import axiosInstance from '../utils/axios';
+import OHLCPanel from './OhlcPanel';
 
 const TradingForm = ({ account1, account2 }) => {
     const [futurePrice] = useState(12345); // just display
@@ -197,27 +198,16 @@ const TradingForm = ({ account1, account2 }) => {
 
 
     return (
-        <Box className="p-4 flex flex-1 flex-col justify-between gap-5">
+        <Box className="p-4 flex flex-1 flex-col justify-between gap-5 min-h-full overflow-scroll">
             <Box className="flex flex-col gap-4">
-                <Box className="flex flex-col gap-2">
-                    <p>Future: {selectedFuture}</p>
-                    <p>Instrument Info: {instrumentInfo ? `${instrumentInfo.name} (${instrumentInfo.tradingsymbol})` : 'Select a future to see details'}</p>
-                    <p>Lot Size: {instrumentInfo ? instrumentInfo.lot_size : 'N/A'}</p>
-                    <p>Tick Size: {instrumentInfo ? instrumentInfo.tick_size : 'N/A'}</p>
-                </Box>
-                <Box className="flex flex-col gap-2">
-                    <Box>
-                        <p>Open: <span>{instrumentInfo ? instrumentInfo.ohlc.open : 'N/A'}</span></p>
-                        <p>High: <span>{instrumentInfo ? instrumentInfo.ohlc.high : 'N/A'}</span></p>
-                        <p>Low: <span>{instrumentInfo ? instrumentInfo.ohlc.low : 'N/A'}</span></p>
-                        <p>Close: <span>{instrumentInfo ? instrumentInfo.ohlc.close : 'N/A'}</span></p>
-                        <p>Last Price: <span>{instrumentInfo ? instrumentInfo.last_price : 'N/A'}</span></p>
-                    </Box>
+                <Box className="bg-gray-100 rounded-lg p-3 shadow-sm border text-sm">
+                    <Typography variant="subtitle2" className="mb-2 font-medium text-gray-700">
+                        Market Snapshot
+                    </Typography>
+
+                   <OHLCPanel instrumentInfo={instrumentInfo} />
 
                 </Box>
-                <Typography variant="h6" color="green" className="text-center">
-                    Future Price: {futurePrice}
-                </Typography>
 
                 <FormControl fullWidth error={Boolean(errors.selectedFuture)}>
                     <InputLabel>Select Future</InputLabel>
