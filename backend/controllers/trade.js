@@ -1,4 +1,4 @@
-const { getPortfolioHoldings, placeZerodhaOrder, GetFutureNiftyAndBankNiftyExpiry, placeNiftyFutureLimitBuyWithStopLoss } = require("../utils/zerodhaFunctions");
+const { getPortfolioHoldings, placeZerodhaOrder, GetFutureNiftyAndBankNiftyExpiry, placeBuySellIntrumentWithStoploss } = require("../utils/zerodhaFunctions");
 
 
 module.exports = {
@@ -77,21 +77,25 @@ module.exports = {
         }
     },
 
-    buyFutureAndStoploss: async (req, res) => {
+    buySellInstrument: async (req, res) => {
         try {
-            const { access_token } = req.body;
-            if (!access_token) {
-                return res.status(400).json({ success: false, error: "Missing access_token" });
+            const { access_token, api_key } = req.body;
+            if (!access_token || !api_key || !req.body.instrument || !req.body.quantity || !req.body.accounts) {
+                return res.status(400).json({ success: false, error: "Missing access_token or api_key" });
             }
+
+            const buyAccountInfo = req.body.accounts.account1.action === 'BUY' ? req.body.accounts.account1 : req.body.accounts.account2;
+            const sellAccountInfo = req.body.accounts.account1.action === 'SELL' ? req.body.accounts.account1 : req.body.accounts.account2;
 
             const payload = {
-                access_token: req.body.access_token,
-                tradingsymbol: req.body.tradingsymbol,
+                tradingsymbol: req.body.instrument,
+                quantity: req.body.quantity,
                 exchange: req.body.exchange || 'NFO',
-                quantity: req.body.quantity || 1
+                buyAccountInfo,
+                sellAccountInfo
             }
 
-            const response = await placeNiftyFutureLimitBuyWithStopLoss({
+            const response = await placeBuySellIntrumentWithStoploss({
                 ...payload
             });
 

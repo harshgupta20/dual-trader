@@ -264,56 +264,63 @@ const GetFutureNiftyAndBankNiftyExpiry = async () => {
   }
 }
 
-const placeNiftyFutureLimitBuyWithStopLoss = async ({
-  access_token,
+const placeBuySellIntrumentWithStoploss = async ({
   tradingsymbol,
-  exchange = 'NFO',
-  quantity = 1
+  quantity,
+  exchange,
+  buyAccountInfo,
+  sellAccountInfo,
 }) => {
 
   try {
-    logger.info('Placing Nifty Future LIMIT BUY | symbol: %s | price: %d | qty: %d', tradingsymbol, quantity);
+    // logger.info('Placing Nifty Future LIMIT BUY | symbol: %s | price: %d | qty: %d', tradingsymbol);
 
-    const instrument = `NFO:${tradingsymbol}`;
-    const stopLossPoints = 100;
-    const currentPrice = await getLTP({ access_token, instruments: [instrument] });
+    // const instrument = `${exchange}:${tradingsymbol}`;
+    // const stopLossPoints = 100;
+    // const instrumentLtpResponse = await getLTP({ access_token, api_key, instruments: [instrument] });
 
-    if (currentPrice === undefined || currentPrice === null || !currentPrice) {
-      throw new Error('Failed to fetch current price');
-    }
+    // if(instrumentLtpResponse?.success === false) {
+    //   throw new Error(instrumentLtpResponse?.error);
+    // }
 
-    logger.debug('Current price fetched | instrument: %s | price: %d', instrument, currentPrice);
+    // const currentPrice = instrumentLtpResponse?.data[instrument]?.last_price;
+
+    // if (currentPrice === undefined || currentPrice === null || !currentPrice) {
+    //   throw new Error('Failed to fetch current price');
+    // }
+
+    // logger.debug('Current price fetched | instrument: %s | price: %d', instrument, currentPrice);
     // Calculate stop loss price for BUY order
-    const stopLossPrice = currentPrice - stopLossPoints;
+    // const stopLossPrice = currentPrice - stopLossPoints;
 
 
-    // const buyResponse = await axios.post(
-    //   'https://api.kite.trade/orders/regular',
-    //   new URLSearchParams({
-    //     tradingsymbol,
-    //     exchange,
-    //     transaction_type: 'BUY',
-    //     order_type: 'LIMIT',
-    //     quantity: quantity.toString(),
-    //     product: "MIS", // or 'MIS' for intraday
-    //     price: currentPrice.toString(),
-    //     validity: 'DAY',
-    //   }),
-    //   {
-    //     headers: {
-    //       'X-Kite-Version': '3',
-    //       'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
-    //       'Content-Type': 'application/x-www-form-urlencoded',
-    //     }
-    //   }
-    // );
+    const buyResponse = await axios.post(
+      'https://api.kite.trade/orders/regular',
+      new URLSearchParams({
+        tradingsymbol,
+        exchange,
+        transaction_type: 'BUY',
+        order_type: 'LIMIT',
+        quantity: quantity.toString(),
+        product: "MIS", // or 'MIS' for intraday
+        price: currentPrice.toString(),
+        validity: 'DAY',
+      }),
+      {
+        headers: {
+          'X-Kite-Version': '3',
+          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      }
+    );
 
 
     // logger.info('Buy LIMIT order placed | order_id: %s', buyResponse.data.data.order_id);
     // console.log("harsh bought future ", buyResponse);
 
     // You might want to wait for order to be executed before placing SL
-    logger.info('Placing Stop-Loss SELL order at trigger: %d', stopLossPrice);
+    // logger.info('Placing Stop-Loss SELL order at trigger: %d', stopLossPrice);
 
     const slResponse = await axios.post(
       'https://api.kite.trade/orders/regular',
@@ -342,9 +349,10 @@ const placeNiftyFutureLimitBuyWithStopLoss = async ({
       success: true,
       data: {
         // buyOrderId: buyResponse.data.data.order_id,
-        stopLossOrderId: slResponse.data.data.order_id,
+        // stopLossOrderId: slResponse.data.data.order_id,
         currentPrice,
-        stopLossPrice,
+        // stopLossPrice,
+
       },
       message: 'Nifty Future LIMIT BUY order placed successfully with Stop-Loss',
     };
@@ -364,6 +372,6 @@ module.exports = {
   placeNiftyFutureOrderWithStopLoss,
   getPortfolioHoldings,
   GetFutureNiftyAndBankNiftyExpiry,
-  placeNiftyFutureLimitBuyWithStopLoss,
+  placeBuySellIntrumentWithStoploss,
   getLTP
 };

@@ -134,7 +134,7 @@ const TradingForm = ({ account1, account2 }) => {
         });
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const newErrors = {};
 
         if (!selectedFuture) newErrors.selectedFuture = 'Please select a future';
@@ -156,6 +156,8 @@ const TradingForm = ({ account1, account2 }) => {
             return;
         }
 
+        accountData.account1 = {api_key: account1?.accountKey, access_token: account1?.access_token, ...accountData.account1};
+        accountData.account2 = {api_key: account2?.accountKey, access_token: account2?.access_token, ...accountData.account2};
         const payload = {
             instrument: selectedFuture,
             quantity,
@@ -166,7 +168,29 @@ const TradingForm = ({ account1, account2 }) => {
         console.log('Executing Order:', payload);
         // Add API call logic here
 
-        setShowResultDialog(prev => ({ ...prev, show: true }));
+        const response = await axiosInstance.post('trade/buy-sell-instruments', {
+            access_token: account1?.access_token,
+            api_key: account1?.accountKey,
+            ...payload
+        });
+
+        if (response.data.success) {
+            console.log('Order executed successfully:', response.data);
+            // Reset form or show success message
+            setSelectedFuture('');
+            setQuantity('');
+            setAccountData({
+                account1: { action: 'BUY', price: '', stopLoss: '' },
+                account2: { action: 'SELL', price: '', stopLoss: '' },
+            });
+            setErrors({});
+            // Show result dialog
+            console.log('Order execution result:', response.data);
+            setShowResultDialog(prev => ({ ...prev, show: true }));
+        } else {
+            console.error('Order execution failed:', response.data.message);
+            setErrors(prev => ({ ...prev, submit: response.data.message || 'Order execution failed' }));
+        }
     };
 
     // Fetch instrument price in every second
