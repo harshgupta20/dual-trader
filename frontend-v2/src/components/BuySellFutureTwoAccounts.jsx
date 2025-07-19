@@ -157,9 +157,9 @@ const TradingForm = ({ account1, account2 }) => {
         }
 
         const payload = {
-            future: selectedFuture,
+            instrument: selectedFuture,
             quantity,
-            futurePrice,
+            // futurePrice,
             accounts: accountData,
         };
 
