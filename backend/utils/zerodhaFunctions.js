@@ -273,77 +273,66 @@ const placeBuySellIntrumentWithStoploss = async ({
 }) => {
 
   try {
+    console.log("harsh tradingsymbol", tradingsymbol, quantity, exchange, buyAccountInfo, sellAccountInfo);
     // logger.info('Placing Nifty Future LIMIT BUY | symbol: %s | price: %d | qty: %d', tradingsymbol);
 
     // const instrument = `${exchange}:${tradingsymbol}`;
     // const stopLossPoints = 100;
     // const instrumentLtpResponse = await getLTP({ access_token, api_key, instruments: [instrument] });
 
-    // if(instrumentLtpResponse?.success === false) {
-    //   throw new Error(instrumentLtpResponse?.error);
-    // }
+    const response1 = await buySellInstrument({
+      access_token: buyAccountInfo.access_token,
+      api_key: buyAccountInfo.api_key,
+      tradingsymbol,
+      exchange,
+      transaction_type: 'BUY',
+      order_type: 'LIMIT',
+      quantity,
+      product: 'MIS',
+      price: buyAccountInfo.price,
+      validity: 'DAY',
+    });
 
-    // const currentPrice = instrumentLtpResponse?.data[instrument]?.last_price;
+    const response2 = await stoplossOrder({
+      access_token: buyAccountInfo.access_token,
+      api_key: buyAccountInfo.api_key,
+      tradingsymbol,
+      exchange,
+      transaction_type: 'SELL',
+      order_type: 'SL', // OR use 'SL' if you want to define
+      quantity,
+      product: 'MIS',
+      price: buyAccountInfo.stopLoss,
+      trigger_price: buyAccountInfo.price,
+      validity: 'DAY',
+    });
 
-    // if (currentPrice === undefined || currentPrice === null || !currentPrice) {
-    //   throw new Error('Failed to fetch current price');
-    // }
+    const response3 = await buySellInstrument({
+      access_token: sellAccountInfo.access_token,
+      api_key: sellAccountInfo.api_key,
+      tradingsymbol,
+      exchange,
+      transaction_type: 'SELL',
+      order_type: 'SL-M',
+      quantity,
+      product: 'MIS',
+      price: sellAccountInfo.price,
+      validity: 'DAY',
+    });
 
-    // logger.debug('Current price fetched | instrument: %s | price: %d', instrument, currentPrice);
-    // Calculate stop loss price for BUY order
-    // const stopLossPrice = currentPrice - stopLossPoints;
-
-
-    const buyResponse = await axios.post(
-      'https://api.kite.trade/orders/regular',
-      new URLSearchParams({
-        tradingsymbol,
-        exchange,
-        transaction_type: 'BUY',
-        order_type: 'LIMIT',
-        quantity: quantity.toString(),
-        product: "MIS", // or 'MIS' for intraday
-        price: currentPrice.toString(),
-        validity: 'DAY',
-      }),
-      {
-        headers: {
-          'X-Kite-Version': '3',
-          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
-      }
-    );
-
-
-    // logger.info('Buy LIMIT order placed | order_id: %s', buyResponse.data.data.order_id);
-    // console.log("harsh bought future ", buyResponse);
-
-    // You might want to wait for order to be executed before placing SL
-    // logger.info('Placing Stop-Loss SELL order at trigger: %d', stopLossPrice);
-
-    const slResponse = await axios.post(
-      'https://api.kite.trade/orders/regular',
-      new URLSearchParams({
-        tradingsymbol,
-        exchange,
-        transaction_type: 'SELL',
-        order_type: 'SL-M', // OR use 'SL' if you want to define trigger + price
-        trigger_price: "25540",
-        quantity: quantity.toString(),
-        product: 'MIS',
-        validity: 'DAY',
-      }),
-      {
-        headers: {
-          'X-Kite-Version': '3',
-          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
-      }
-    );
-
-    // logger.info('Stop-Loss SELL order placed | order_id: %s', slResponse.data.data.order_id);
+    const response4 = await stoplossOrder({
+      access_token: sellAccountInfo.access_token,
+      api_key: sellAccountInfo.api_key,
+      tradingsymbol,
+      exchange,
+      transaction_type: 'BUY',
+      order_type: 'SL', // OR use 'SL' if you want to define trigger + price
+      quantity,
+      product: 'MIS',
+      price: sellAccountInfo.price,
+      trigger_price: sellAccountInfo.stoploss,
+      validity: 'DAY',
+    });
 
     return {
       success: true,
@@ -352,13 +341,89 @@ const placeBuySellIntrumentWithStoploss = async ({
         // stopLossOrderId: slResponse.data.data.order_id,
         currentPrice,
         // stopLossPrice,
-
+        response1: response1,
+        response2: response2,
+        response3: response3,
+        response4: response4,
       },
       message: 'Nifty Future LIMIT BUY order placed successfully with Stop-Loss',
     };
 
   } catch (error) {
     logger.error('Error placing Nifty Future limit buy with SL | %o', error?.response?.data || error?.message);
+    return { success: false, error: error?.response?.data || error?.message };
+  }
+};
+
+const buySellInstrument = async ({ access_token, api_key, tradingsymbol, exchange, transaction_type, order_type, quantity, product, price, validity }) => {
+  try {
+    const response = await axios.post('https://api.kite.trade/orders/regular',
+      new URLSearchParams({
+        tradingsymbol: 'NIFTY23JUNFUT',
+        exchange: 'NFO',
+        transaction_type: 'BUY',
+        order_type: 'LIMIT',
+        quantity: '1',
+        product: 'MIS',
+        price: '25540', // Example price
+        validity: 'DAY',
+      }),
+      {
+        headers: {
+          'X-Kite-Version': '3',
+          'Authorization': `token ${api_key}:${access_token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      });
+
+    if (response?.data?.status === 'success') {
+      logger.info('Buy order placed successfully | order_id: %s', response.data.data.order_id);
+      return { success: true, data: response.data.data };
+    }
+    else {
+      logger.error('Failed to place buy order | error: %o', response.data);
+      return { success: false, error: response.data };
+    }
+  }
+  catch (error) {
+    logger.error('Error placing buy instrument | %o', error?.response?.data || error?.message);
+    return { success: false, error: error?.response?.data || error?.message };
+  }
+}
+
+const stoplossOrder = async ({ access_token, api_key, tradingsymbol, exchange, transaction_type, order_type, quantity, product, price }) => {
+  try {
+    const response = await axios.post(
+      'https://api.kite.trade/orders/regular',
+      new URLSearchParams({
+        tradingsymbol,
+        exchange,
+        transaction_type: 'SELL',
+        order_type: 'SL', // OR use 'SL' if you want to define trigger + price
+        trigger_price: "25540",
+        price: price.toString(),
+        quantity: quantity.toString(),
+        product: 'MIS',
+        validity: 'DAY',
+      }),
+      {
+        headers: {
+          'X-Kite-Version': '3',
+          'Authorization': `token ${api_key}:${access_token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      }
+    );
+
+    if (response?.data?.status === 'success') {
+      logger.info('Stop-loss order placed successfully | order_id: %s', response.data.data.order_id);
+      return { success: true, data: response.data.data };
+    } else {
+      logger.error('Failed to place stop-loss order | error: %o', response.data);
+      return { success: false, error: response.data };
+    }
+  } catch (error) {
+    logger.error('Error placing stop-loss order | %o', error?.response?.data || error?.message);
     return { success: false, error: error?.response?.data || error?.message };
   }
 };

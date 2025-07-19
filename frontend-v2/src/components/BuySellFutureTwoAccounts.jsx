@@ -18,7 +18,7 @@ import OHLCPanel from './OhlcPanel';
 
 const TradingForm = ({ account1, account2 }) => {
     const [futurePrice] = useState(12345); // just display
-    const [selectedFuture, setSelectedFuture] = useState('');
+    const [selectedInstrument, setSelectedInstrument] = useState('');
     const [quantity, setQuantity] = useState('');
     const [errors, setErrors] = useState({});
     const [showResultDialog, setShowResultDialog] = useState({ show: false });
@@ -30,7 +30,8 @@ const TradingForm = ({ account1, account2 }) => {
         account2: { action: 'SELL', price: '', stopLoss: '' },
     });
 
-    const INTRUMENTS_LIST = [
+    console.log("harsh accountData", accountData)
+    const INSTRUMENTS_LIST = [
         {
             "instrument_token": 13623298,
             "exchange_token": 53216,
@@ -61,24 +62,24 @@ const TradingForm = ({ account1, account2 }) => {
         }
     ]
 
-    const handleGetIntrumentPrice = async (selectedFuture) => {
+    const handleGetIntrumentPrice = async (selectedInstrument) => {
         try {
 
-            const instrument = `NFO:${selectedFuture}`;
+            const instrument = `NFO:${selectedInstrument}`;
             const response = await axiosInstance.post('data/instruments-ltp', {
                 access_token: account1?.access_token,
                 instruments: [instrument],
                 api_key: account1?.accountKey
             });
             if (response.data.success) {
-                // setFuturePrice(response.data.data[selectedFuture]?.last_price || 0);
+                // setFuturePrice(response.data.data[selectedInstrument]?.last_price || 0);
                 setInstrumentInfo(response.data.data[instrument]);
             } else {
                 console.error('Failed to fetch instrument price:', response.data.message);
             }
         } catch (error) {
             console.error('Error fetching instrument price:', error);
-            setErrors(prev => ({ ...prev, selectedFuture: 'Failed to fetch instrument price' }));
+            setErrors(prev => ({ ...prev, selectedInstrument: 'Failed to fetch instrument price' }));
         }
     }
 
@@ -137,7 +138,7 @@ const TradingForm = ({ account1, account2 }) => {
     const handleSubmit = async () => {
         const newErrors = {};
 
-        if (!selectedFuture) newErrors.selectedFuture = 'Please select a future';
+        if (!selectedInstrument) newErrors.selectedInstrument = 'Please select a future';
         if (!quantity || parseFloat(quantity) <= 0) newErrors.quantity = 'Enter a valid quantity';
 
         ['account1', 'account2'].forEach(account => {
@@ -156,10 +157,20 @@ const TradingForm = ({ account1, account2 }) => {
             return;
         }
 
+        const selectedInstrumentInfo = INSTRUMENTS_LIST.find(
+            (instrument) => instrument?.tradingsymbol === selectedInstrument
+        );
+
+        if (!selectedInstrumentInfo) {
+            setErrors(prev => ({ ...prev, selectedInstrument: 'Invalid instrument selected' }));
+            return;
+        }
+        console.log("harsh selectedInstrumentInfo", selectedInstrumentInfo);
+
         accountData.account1 = {api_key: account1?.accountKey, access_token: account1?.access_token, ...accountData.account1};
         accountData.account2 = {api_key: account2?.accountKey, access_token: account2?.access_token, ...accountData.account2};
         const payload = {
-            instrument: selectedFuture,
+            instrument: selectedInstrumentInfo.tradingsymbol,
             quantity,
             // futurePrice,
             accounts: accountData,
@@ -169,7 +180,7 @@ const TradingForm = ({ account1, account2 }) => {
         // Add API call logic here
 
         const response = await axiosInstance.post('trade/buy-sell-instruments', {
-            access_token: account1?.access_token,
+            // access_token: account1?.access_token,
             api_key: account1?.accountKey,
             ...payload
         });
@@ -177,7 +188,7 @@ const TradingForm = ({ account1, account2 }) => {
         if (response.data.success) {
             console.log('Order executed successfully:', response.data);
             // Reset form or show success message
-            setSelectedFuture('');
+            setSelectedInstrument('');
             setQuantity('');
             setAccountData({
                 account1: { action: 'BUY', price: '', stopLoss: '' },
@@ -197,28 +208,28 @@ const TradingForm = ({ account1, account2 }) => {
     useEffect(() => {
         let intervalId;
 
-        if (selectedFuture) {
+        if (selectedInstrument) {
             // Set the quantity immediately
-            const instrument = INTRUMENTS_LIST.find(
-                (instrument) => instrument.tradingsymbol === selectedFuture
+            const instrument = INSTRUMENTS_LIST.find(
+                (instrument) => instrument.tradingsymbol === selectedInstrument
             );
             setQuantity(instrument?.lot_size || null);
 
             // Call it once immediately
-            handleGetIntrumentPrice(selectedFuture);
+            handleGetIntrumentPrice(selectedInstrument);
 
             // Then every 2 seconds
             intervalId = setInterval(() => {
-                handleGetIntrumentPrice(selectedFuture);
+                handleGetIntrumentPrice(selectedInstrument);
             }, 1000);
         }
-        // Cleanup on unmount or when selectedFuture changes
+        // Cleanup on unmount or when selectedInstrument changes
         return () => {
             if (intervalId) {
                 clearInterval(intervalId);
             }
         };
-    }, [selectedFuture]);
+    }, [selectedInstrument]);
 
 
     return (
@@ -234,20 +245,20 @@ const TradingForm = ({ account1, account2 }) => {
                 </Box>
 
                 <Box className="flex gap-2">
-                    <FormControl className="flex-1" error={Boolean(errors.selectedFuture)}>
+                    <FormControl className="flex-1" error={Boolean(errors.selectedInstrument)}>
                         <InputLabel>Select Future</InputLabel>
                         <Select
-                            value={selectedFuture}
-                            onChange={(e) => setSelectedFuture(e.target.value)}
+                            value={selectedInstrument}
+                            onChange={(e) => setSelectedInstrument(e.target.value)}
                             label="Select Future"
                         >
-                            {INTRUMENTS_LIST.map((instrument) => (
+                            {INSTRUMENTS_LIST.map((instrument) => (
                                 <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
                                     {instrument.tradingsymbol} ({instrument.name})
                                 </MenuItem>
                             ))}
                         </Select>
-                        {errors.selectedFuture && <FormHelperText>{errors.selectedFuture}</FormHelperText>}
+                        {errors.selectedInstrument && <FormHelperText>{errors.selectedInstrument}</FormHelperText>}
                     </FormControl>
 
                     <TextField
