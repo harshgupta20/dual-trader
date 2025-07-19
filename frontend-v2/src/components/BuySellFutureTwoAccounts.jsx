@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Box,
     Button,
@@ -13,6 +13,7 @@ import {
     InputLabel
 } from '@mui/material';
 import ResultDialog from './buySellFuture/ResultDialog';
+import axiosInstance from '../utils/axios';
 
 const TradingForm = ({ account1, account2 }) => {
     const [futurePrice] = useState(12345); // just display
@@ -20,11 +21,65 @@ const TradingForm = ({ account1, account2 }) => {
     const [quantity, setQuantity] = useState('');
     const [errors, setErrors] = useState({});
     const [showResultDialog, setShowResultDialog] = useState({ show: false });
+    const [instrumentInfo, setInstrumentInfo] = useState(null);
+    // const [lotSize, setLotSize] = useState(null);
 
     const [accountData, setAccountData] = useState({
         account1: { action: 'BUY', price: '', stopLoss: '' },
         account2: { action: 'SELL', price: '', stopLoss: '' },
     });
+
+    const INTRUMENTS_LIST = [
+        {
+            "instrument_token": 13623298,
+            "exchange_token": 53216,
+            "tradingsymbol": "NIFTY25JULFUT",
+            "name": "NIFTY",
+            "last_price": 0,
+            "expiry": "2025-07-31",
+            "strike": 0,
+            "tick_size": 0.1,
+            "lot_size": 75,
+            "instrument_type": "FUT",
+            "segment": "NFO-FUT",
+            "exchange": "NFO"
+        },
+        {
+            "instrument_token": 13622530,
+            "exchange_token": 53213,
+            "tradingsymbol": "BANKNIFTY25JULFUT",
+            "name": "BANKNIFTY",
+            "last_price": 0,
+            "expiry": "2025-07-31",
+            "strike": 0,
+            "tick_size": 0.2,
+            "lot_size": 35,
+            "instrument_type": "FUT",
+            "segment": "NFO-FUT",
+            "exchange": "NFO"
+        }
+    ]
+
+    const handleGetIntrumentPrice = async (selectedFuture) => {
+        try {
+
+            const instrument = `NFO:${selectedFuture}`;
+            const response = await axiosInstance.post('data/instruments-ltp', {
+                access_token: account1?.access_token,
+                instruments: [instrument],
+                api_key: account1?.accountKey
+            });
+            if (response.data.success) {
+                // setFuturePrice(response.data.data[selectedFuture]?.last_price || 0);
+                setInstrumentInfo(response.data.data[instrument]);
+            } else {
+                console.error('Failed to fetch instrument price:', response.data.message);
+            }
+        } catch (error) {
+            console.error('Error fetching instrument price:', error);
+            setErrors(prev => ({ ...prev, selectedFuture: 'Failed to fetch instrument price' }));
+        }
+    }
 
     const validateStopLoss = (account, price, stopLoss) => {
         if (!price || !stopLoss) return '';
@@ -113,9 +168,53 @@ const TradingForm = ({ account1, account2 }) => {
         setShowResultDialog(prev => ({ ...prev, show: true }));
     };
 
+    // Fetch instrument price in every 2 seconds
+    useEffect(() => {
+        let intervalId;
+
+        if (selectedFuture) {
+            // Set the quantity immediately
+            const instrument = INTRUMENTS_LIST.find(
+                (instrument) => instrument.tradingsymbol === selectedFuture
+            );
+            setQuantity(instrument?.lot_size || null);
+
+            // Call it once immediately
+            handleGetIntrumentPrice(selectedFuture);
+
+            // Then every 2 seconds
+            intervalId = setInterval(() => {
+                handleGetIntrumentPrice(selectedFuture);
+            }, 2000);
+        }
+        // Cleanup on unmount or when selectedFuture changes
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [selectedFuture]);
+
+
     return (
         <Box className="p-4 flex flex-1 flex-col justify-between gap-5">
             <Box className="flex flex-col gap-4">
+                <Box className="flex flex-col gap-2">
+                    <p>Future: {selectedFuture}</p>
+                    <p>Instrument Info: {instrumentInfo ? `${instrumentInfo.name} (${instrumentInfo.tradingsymbol})` : 'Select a future to see details'}</p>
+                    <p>Lot Size: {instrumentInfo ? instrumentInfo.lot_size : 'N/A'}</p>
+                    <p>Tick Size: {instrumentInfo ? instrumentInfo.tick_size : 'N/A'}</p>
+                </Box>
+                <Box className="flex flex-col gap-2">
+                    <Box>
+                        <p>Open: <span>{instrumentInfo ? instrumentInfo.ohlc.open : 'N/A'}</span></p>
+                        <p>High: <span>{instrumentInfo ? instrumentInfo.ohlc.high : 'N/A'}</span></p>
+                        <p>Low: <span>{instrumentInfo ? instrumentInfo.ohlc.low : 'N/A'}</span></p>
+                        <p>Close: <span>{instrumentInfo ? instrumentInfo.ohlc.close : 'N/A'}</span></p>
+                        <p>Last Price: <span>{instrumentInfo ? instrumentInfo.last_price : 'N/A'}</span></p>
+                    </Box>
+
+                </Box>
                 <Typography variant="h6" color="green" className="text-center">
                     Future Price: {futurePrice}
                 </Typography>
@@ -127,10 +226,11 @@ const TradingForm = ({ account1, account2 }) => {
                         onChange={(e) => setSelectedFuture(e.target.value)}
                         label="Select Future"
                     >
-                        <MenuItem value=""><em>Select</em></MenuItem>
-                        <MenuItem value="NIFTY25JULFUT">NIFTY25JULFUT</MenuItem>
-                        <MenuItem value="BANKNIFTY25JULFUT">BANKNIFTY25JULFUT</MenuItem>
-                        <MenuItem value="FINNIFTY25JULFUT">FINNIFTY25JULFUT</MenuItem>
+                        {INTRUMENTS_LIST.map((instrument) => (
+                            <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
+                                {instrument.tradingsymbol} ({instrument.name})
+                            </MenuItem>
+                        ))}
                     </Select>
                     {errors.selectedFuture && <FormHelperText>{errors.selectedFuture}</FormHelperText>}
                 </FormControl>
