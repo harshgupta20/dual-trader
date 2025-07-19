@@ -79,10 +79,10 @@ module.exports = {
 
     buySellInstrument: async (req, res) => {
         try {
-            const { access_token, api_key } = req.body;
-            if (!access_token || !api_key || !req.body.instrument || !req.body.quantity || !req.body.accounts) {
-                return res.status(400).json({ success: false, error: "Missing access_token or api_key" });
-            }
+            // const { access_token, api_key } = req.body;
+            // if (!access_token || !api_key || !req.body.instrument || !req.body.quantity || !req.body.accounts) {
+            //     return res.status(400).json({ success: false, error: "Missing access_token or api_key" });
+            // }
 
             const buyAccountInfo = req.body.accounts.account1.action === 'BUY' ? req.body.accounts.account1 : req.body.accounts.account2;
             const sellAccountInfo = req.body.accounts.account1.action === 'SELL' ? req.body.accounts.account1 : req.body.accounts.account2;
@@ -90,9 +90,10 @@ module.exports = {
             const payload = {
                 tradingsymbol: req.body.instrument,
                 quantity: req.body.quantity,
-                exchange: req.body.exchange || 'NFO',
+                exchange: req.body.exchange || null,
                 buyAccountInfo,
-                sellAccountInfo
+                sellAccountInfo,
+                product: req.body.product || null,
             }
 
             const response = await placeBuySellIntrumentWithStoploss({

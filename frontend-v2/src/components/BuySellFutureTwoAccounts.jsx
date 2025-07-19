@@ -20,6 +20,7 @@ const TradingForm = ({ account1, account2 }) => {
     const [selectedInstrument, setSelectedInstrument] = useState('');
     const [exchange, setExchange] = useState('');
     const [quantity, setQuantity] = useState('');
+    const [productType, setProductType] = useState('');
     const [errors, setErrors] = useState({});
     const [showResultDialog, setShowResultDialog] = useState({ show: false });
     const [instrumentInfo, setInstrumentInfo] = useState(null);
@@ -135,6 +136,7 @@ const TradingForm = ({ account1, account2 }) => {
 
         if (!selectedInstrument) newErrors.selectedInstrument = 'Please select a future';
         if (!quantity || parseFloat(quantity) <= 0) newErrors.quantity = 'Enter a valid quantity';
+        if (!productType) newErrors.productType = 'Select a product type';
 
         ['account1', 'account2'].forEach(account => {
             const { price, stopLoss } = accountData[account];
@@ -172,20 +174,19 @@ const TradingForm = ({ account1, account2 }) => {
             instrument: selectedInstrumentInfo.tradingsymbol,
             quantity,
             exchange,
+            product: productType,
             accounts: accountData,
-            api_key: account1?.accountKey,
-            // access_token: account1?.access_token,
         };
 
         console.log("harsh payload", payload);
-        const response = await axiosInstance.post('trade/buy-sell-instruments', {
-            ...payload
-        });
+
+        const response = await axiosInstance.post('trade/buy-sell-instruments', payload);
 
         if (response.data.success) {
             setSelectedInstrument('');
             setQuantity('');
             setExchange('');
+            setProductType('');
             setAccountData({
                 account1: { action: 'BUY', price: '', stopLoss: '' },
                 account2: { action: 'SELL', price: '', stopLoss: '' },
@@ -199,8 +200,6 @@ const TradingForm = ({ account1, account2 }) => {
             }));
         }
     };
-
-    console.log("harsh accountData", accountData);
 
     useEffect(() => {
         let intervalId;
@@ -275,6 +274,19 @@ const TradingForm = ({ account1, account2 }) => {
                         disabled
                     />
                 </Box>
+
+                <FormControl error={Boolean(errors.productType)} fullWidth>
+                    <InputLabel>Product Type</InputLabel>
+                    <Select
+                        value={productType}
+                        onChange={(e) => setProductType(e.target.value)}
+                        label="Product Type"
+                    >
+                        <MenuItem value="MIS">Intraday (MIS)</MenuItem>
+                        <MenuItem value="NRML">Carry (NRML)</MenuItem>
+                    </Select>
+                    {errors.productType && <FormHelperText>{errors.productType}</FormHelperText>}
+                </FormControl>
 
                 {['account1', 'account2'].map((account, i) => (
                     <Box key={account} className="border p-3 rounded-md space-y-3">

@@ -268,19 +268,20 @@ const placeBuySellIntrumentWithStoploss = async ({
   tradingsymbol,
   quantity,
   exchange,
+  product,
   buyAccountInfo,
   sellAccountInfo,
 }) => {
 
   try {
-    console.log("harsh tradingsymbol", tradingsymbol, quantity, exchange, buyAccountInfo, sellAccountInfo);
+    console.log("harsh tradingsymbol", tradingsymbol, quantity, exchange, buyAccountInfo, sellAccountInfo, product);
     // logger.info('Placing Nifty Future LIMIT BUY | symbol: %s | price: %d | qty: %d', tradingsymbol);
 
     // const instrument = `${exchange}:${tradingsymbol}`;
     // const stopLossPoints = 100;
     // const instrumentLtpResponse = await getLTP({ access_token, api_key, instruments: [instrument] });
 
-    const response1 = await buySellInstrument({
+    const buyIntrumentResponse = await buySellInstrument({
       access_token: buyAccountInfo.access_token,
       api_key: buyAccountInfo.api_key,
       tradingsymbol,
@@ -288,12 +289,17 @@ const placeBuySellIntrumentWithStoploss = async ({
       transaction_type: 'BUY',
       order_type: 'LIMIT',
       quantity,
-      product: 'MIS',
+      product: product,
       price: buyAccountInfo.price,
       validity: 'DAY',
     });
 
-    const response2 = await stoplossOrder({
+    if(buyIntrumentResponse?.success === false) {
+      logger.error('Failed to place buy order | error: %o', buyIntrumentResponse.error);
+      return { success: false, error: buyIntrumentResponse.error };
+    }
+
+    const buyStoplossIntrumentResponse = await stoplossOrder({
       access_token: buyAccountInfo.access_token,
       api_key: buyAccountInfo.api_key,
       tradingsymbol,
@@ -301,50 +307,55 @@ const placeBuySellIntrumentWithStoploss = async ({
       transaction_type: 'SELL',
       order_type: 'SL', // OR use 'SL' if you want to define
       quantity,
-      product: 'MIS',
+      product: product,
       price: buyAccountInfo.stopLoss,
       trigger_price: buyAccountInfo.price,
       validity: 'DAY',
     });
 
-    const response3 = await buySellInstrument({
-      access_token: sellAccountInfo.access_token,
-      api_key: sellAccountInfo.api_key,
-      tradingsymbol,
-      exchange,
-      transaction_type: 'SELL',
-      order_type: 'SL-M',
-      quantity,
-      product: 'MIS',
-      price: sellAccountInfo.price,
-      validity: 'DAY',
-    });
+    if(buyStoplossIntrumentResponse?.success === false) {
+      logger.error('Failed to place stop-loss order | error: %o', buyStoplossIntrumentResponse.error);
+      return { success: false, error: buyStoplossIntrumentResponse.error };
+    }
 
-    const response4 = await stoplossOrder({
-      access_token: sellAccountInfo.access_token,
-      api_key: sellAccountInfo.api_key,
-      tradingsymbol,
-      exchange,
-      transaction_type: 'BUY',
-      order_type: 'SL', // OR use 'SL' if you want to define trigger + price
-      quantity,
-      product: 'MIS',
-      price: sellAccountInfo.price,
-      trigger_price: sellAccountInfo.stoploss,
-      validity: 'DAY',
-    });
+    // const sellIntrumentResponse = await buySellInstrument({
+    //   access_token: sellAccountInfo.access_token,
+    //   api_key: sellAccountInfo.api_key,
+    //   tradingsymbol,
+    //   exchange,
+    //   transaction_type: 'SELL',
+    //   order_type: 'SL-M',
+    //   quantity,
+    //   product: product,
+    //   price: sellAccountInfo.price,
+    //   validity: 'DAY',
+    // });
+
+    // const sellStoplossIntrumentResponse = await stoplossOrder({
+    //   access_token: sellAccountInfo.access_token,
+    //   api_key: sellAccountInfo.api_key,
+    //   tradingsymbol,
+    //   exchange,
+    //   transaction_type: 'BUY',
+    //   order_type: 'SL', // OR use 'SL' if you want to define trigger + price
+    //   quantity,
+    //   product: product,
+    //   price: sellAccountInfo.price,
+    //   trigger_price: sellAccountInfo.stoploss,
+    //   validity: 'DAY',
+    // });
 
     return {
       success: true,
       data: {
         // buyOrderId: buyResponse.data.data.order_id,
         // stopLossOrderId: slResponse.data.data.order_id,
-        currentPrice,
+        // currentPrice,
         // stopLossPrice,
-        response1: response1,
-        response2: response2,
-        response3: response3,
-        response4: response4,
+        response1: buyIntrumentResponse,
+        response2: buyStoplossIntrumentResponse,
+        // response3: sellIntrumentResponse,
+        // response4: sellStoplossIntrumentResponse,
       },
       message: 'Nifty Future LIMIT BUY order placed successfully with Stop-Loss',
     };
@@ -359,13 +370,13 @@ const buySellInstrument = async ({ access_token, api_key, tradingsymbol, exchang
   try {
     const response = await axios.post('https://api.kite.trade/orders/regular',
       new URLSearchParams({
-        tradingsymbol: 'NIFTY23JUNFUT',
-        exchange: 'NFO',
-        transaction_type: 'BUY',
+        tradingsymbol: tradingsymbol,
+        exchange: exchange,
+        transaction_type: transaction_type,
         order_type: 'LIMIT',
-        quantity: '1',
-        product: 'MIS',
-        price: '25540', // Example price
+        quantity: quantity,
+        product: product,
+        price: price, // Example price
         validity: 'DAY',
       }),
       {
@@ -400,10 +411,10 @@ const stoplossOrder = async ({ access_token, api_key, tradingsymbol, exchange, t
         exchange,
         transaction_type: 'SELL',
         order_type: 'SL', // OR use 'SL' if you want to define trigger + price
-        trigger_price: "25540",
+        trigger_price: price.toString(),
         price: price.toString(),
         quantity: quantity.toString(),
-        product: 'MIS',
+        product: product,
         validity: 'DAY',
       }),
       {
