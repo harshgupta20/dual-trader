@@ -12,7 +12,7 @@ export default defineConfig({
       name: 'Dual Trader',
       short_name: 'DT By Ash',
       description: 'Non-Profit Experimental Trading Platform',
-      theme_color: '#4299e1',
+      theme_color: '#000000',
       background_color: '#ffffff',
       display: 'standalone',
       start_url: '/',
