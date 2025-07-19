@@ -17,20 +17,18 @@ import axiosInstance from '../utils/axios';
 import OHLCPanel from './OhlcPanel';
 
 const TradingForm = ({ account1, account2 }) => {
-    const [futurePrice] = useState(12345); // just display
     const [selectedInstrument, setSelectedInstrument] = useState('');
+    const [exchange, setExchange] = useState('');
     const [quantity, setQuantity] = useState('');
     const [errors, setErrors] = useState({});
     const [showResultDialog, setShowResultDialog] = useState({ show: false });
     const [instrumentInfo, setInstrumentInfo] = useState(null);
-    // const [lotSize, setLotSize] = useState(null);
 
     const [accountData, setAccountData] = useState({
         account1: { action: 'BUY', price: '', stopLoss: '' },
         account2: { action: 'SELL', price: '', stopLoss: '' },
     });
 
-    console.log("harsh accountData", accountData)
     const INSTRUMENTS_LIST = [
         {
             "instrument_token": 13623298,
@@ -60,11 +58,10 @@ const TradingForm = ({ account1, account2 }) => {
             "segment": "NFO-FUT",
             "exchange": "NFO"
         }
-    ]
+    ];
 
     const handleGetIntrumentPrice = async (selectedInstrument) => {
         try {
-
             const instrument = `NFO:${selectedInstrument}`;
             const response = await axiosInstance.post('data/instruments-ltp', {
                 access_token: account1?.access_token,
@@ -72,7 +69,6 @@ const TradingForm = ({ account1, account2 }) => {
                 api_key: account1?.accountKey
             });
             if (response.data.success) {
-                // setFuturePrice(response.data.data[selectedInstrument]?.last_price || 0);
                 setInstrumentInfo(response.data.data[instrument]);
             } else {
                 console.error('Failed to fetch instrument price:', response.data.message);
@@ -81,7 +77,7 @@ const TradingForm = ({ account1, account2 }) => {
             console.error('Error fetching instrument price:', error);
             setErrors(prev => ({ ...prev, selectedInstrument: 'Failed to fetch instrument price' }));
         }
-    }
+    };
 
     const validateStopLoss = (account, price, stopLoss) => {
         if (!price || !stopLoss) return '';
@@ -126,7 +122,6 @@ const TradingForm = ({ account1, account2 }) => {
             [otherAccount]: { ...prev[otherAccount], action: opposite }
         }));
 
-        // Re-validate both
         ['account1', 'account2'].forEach(acc => {
             const price = accountData[acc].price;
             const stopLoss = accountData[acc].stopLoss;
@@ -151,11 +146,7 @@ const TradingForm = ({ account1, account2 }) => {
         });
 
         setErrors(newErrors);
-
-        if (Object.keys(newErrors).length > 0) {
-            console.warn('Fix validation errors before submitting');
-            return;
-        }
+        if (Object.keys(newErrors).length > 0) return;
 
         const selectedInstrumentInfo = INSTRUMENTS_LIST.find(
             (instrument) => instrument?.tradingsymbol === selectedInstrument
@@ -165,72 +156,73 @@ const TradingForm = ({ account1, account2 }) => {
             setErrors(prev => ({ ...prev, selectedInstrument: 'Invalid instrument selected' }));
             return;
         }
-        console.log("harsh selectedInstrumentInfo", selectedInstrumentInfo);
 
-        accountData.account1 = {api_key: account1?.accountKey, access_token: account1?.access_token, ...accountData.account1};
-        accountData.account2 = {api_key: account2?.accountKey, access_token: account2?.access_token, ...accountData.account2};
+        accountData.account1 = {
+            api_key: account1?.accountKey,
+            access_token: account1?.access_token,
+            ...accountData.account1
+        };
+        accountData.account2 = {
+            api_key: account2?.accountKey,
+            access_token: account2?.access_token,
+            ...accountData.account2
+        };
+
         const payload = {
             instrument: selectedInstrumentInfo.tradingsymbol,
             quantity,
-            // futurePrice,
+            exchange,
             accounts: accountData,
+            api_key: account1?.accountKey,
+            // access_token: account1?.access_token,
         };
 
-        console.log('Executing Order:', payload);
-        // Add API call logic here
-
+        console.log("harsh payload", payload);
         const response = await axiosInstance.post('trade/buy-sell-instruments', {
-            // access_token: account1?.access_token,
-            api_key: account1?.accountKey,
             ...payload
         });
 
         if (response.data.success) {
-            console.log('Order executed successfully:', response.data);
-            // Reset form or show success message
             setSelectedInstrument('');
             setQuantity('');
+            setExchange('');
             setAccountData({
                 account1: { action: 'BUY', price: '', stopLoss: '' },
                 account2: { action: 'SELL', price: '', stopLoss: '' },
             });
             setErrors({});
-            // Show result dialog
-            console.log('Order execution result:', response.data);
-            setShowResultDialog(prev => ({ ...prev, show: true }));
+            setShowResultDialog({ show: true });
         } else {
-            console.error('Order execution failed:', response.data.message);
-            setErrors(prev => ({ ...prev, submit: response.data.message || 'Order execution failed' }));
+            setErrors(prev => ({
+                ...prev,
+                submit: response.data.message || 'Order execution failed'
+            }));
         }
     };
 
-    // Fetch instrument price in every second
+    console.log("harsh accountData", accountData);
+
     useEffect(() => {
         let intervalId;
 
         if (selectedInstrument) {
-            // Set the quantity immediately
             const instrument = INSTRUMENTS_LIST.find(
                 (instrument) => instrument.tradingsymbol === selectedInstrument
             );
-            setQuantity(instrument?.lot_size || null);
+            setQuantity(instrument?.lot_size || '');
+            setExchange(instrument?.exchange || '');
 
-            // Call it once immediately
             handleGetIntrumentPrice(selectedInstrument);
 
-            // Then every 2 seconds
             intervalId = setInterval(() => {
                 handleGetIntrumentPrice(selectedInstrument);
             }, 1000);
         }
-        // Cleanup on unmount or when selectedInstrument changes
+
         return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
+            if (intervalId) clearInterval(intervalId);
         };
     }, [selectedInstrument]);
-
 
     return (
         <Box className="p-4 flex flex-1 flex-col justify-between gap-5 min-h-full overflow-scroll">
@@ -239,9 +231,7 @@ const TradingForm = ({ account1, account2 }) => {
                     <Typography variant="subtitle2" className="mb-2 font-medium text-gray-700">
                         Market Snapshot
                     </Typography>
-
                     <OHLCPanel instrumentInfo={instrumentInfo} />
-
                 </Box>
 
                 <Box className="flex gap-2">
@@ -249,7 +239,12 @@ const TradingForm = ({ account1, account2 }) => {
                         <InputLabel>Select Future</InputLabel>
                         <Select
                             value={selectedInstrument}
-                            onChange={(e) => setSelectedInstrument(e.target.value)}
+                            onChange={(e) => {
+                                const symbol = e.target.value;
+                                setSelectedInstrument(symbol);
+                                const selected = INSTRUMENTS_LIST.find(item => item.tradingsymbol === symbol);
+                                setExchange(selected?.exchange || '');
+                            }}
                             label="Select Future"
                         >
                             {INSTRUMENTS_LIST.map((instrument) => (
@@ -271,13 +266,24 @@ const TradingForm = ({ account1, account2 }) => {
                         error={Boolean(errors.quantity)}
                         helperText={errors.quantity}
                     />
-                </Box>
 
+                    <TextField
+                        className="flex-1"
+                        variant="outlined"
+                        label="Exchange"
+                        value={exchange}
+                        disabled
+                    />
+                </Box>
 
                 {['account1', 'account2'].map((account, i) => (
                     <Box key={account} className="border p-3 rounded-md space-y-3">
                         <Typography className="text-sm text-gray-600">
-                            {account === "account1" ? <span>{account1?.user_shortname} ({account1?.user_id})</span> : <span>{account2?.user_shortname} ({account2?.user_id})</span>} - Account {i + 1}
+                            {account === "account1" ? (
+                                <span>{account1?.user_shortname} ({account1?.user_id})</span>
+                            ) : (
+                                <span>{account2?.user_shortname} ({account2?.user_id})</span>
+                            )} - Account {i + 1}
                         </Typography>
 
                         <Box className="flex items-center gap-3">
@@ -329,11 +335,12 @@ const TradingForm = ({ account1, account2 }) => {
                 Execute Order
             </Button>
 
-
-            {showResultDialog?.show && <ResultDialog
-                open={showResultDialog.show} // Replace with actual state to control dialog visibility
-                close={() => setShowResultDialog(prev => ({ ...prev, show: false }))} // Replace with actual close handler
-            />}
+            {showResultDialog?.show && (
+                <ResultDialog
+                    open={showResultDialog.show}
+                    close={() => setShowResultDialog({ show: false })}
+                />
+            )}
         </Box>
     );
 };
