@@ -169,7 +169,7 @@ const TradingForm = ({ account1, account2 }) => {
         setShowResultDialog(prev => ({ ...prev, show: true }));
     };
 
-    // Fetch instrument price in every 2 seconds
+    // Fetch instrument price in every second
     useEffect(() => {
         let intervalId;
 
@@ -186,7 +186,7 @@ const TradingForm = ({ account1, account2 }) => {
             // Then every 2 seconds
             intervalId = setInterval(() => {
                 handleGetIntrumentPrice(selectedFuture);
-            }, 2000);
+            }, 1000);
         }
         // Cleanup on unmount or when selectedFuture changes
         return () => {
@@ -205,36 +205,39 @@ const TradingForm = ({ account1, account2 }) => {
                         Market Snapshot
                     </Typography>
 
-                   <OHLCPanel instrumentInfo={instrumentInfo} />
+                    <OHLCPanel instrumentInfo={instrumentInfo} />
 
                 </Box>
 
-                <FormControl fullWidth error={Boolean(errors.selectedFuture)}>
-                    <InputLabel>Select Future</InputLabel>
-                    <Select
-                        value={selectedFuture}
-                        onChange={(e) => setSelectedFuture(e.target.value)}
-                        label="Select Future"
-                    >
-                        {INTRUMENTS_LIST.map((instrument) => (
-                            <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
-                                {instrument.tradingsymbol} ({instrument.name})
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    {errors.selectedFuture && <FormHelperText>{errors.selectedFuture}</FormHelperText>}
-                </FormControl>
+                <Box className="flex gap-2">
+                    <FormControl className="flex-1" error={Boolean(errors.selectedFuture)}>
+                        <InputLabel>Select Future</InputLabel>
+                        <Select
+                            value={selectedFuture}
+                            onChange={(e) => setSelectedFuture(e.target.value)}
+                            label="Select Future"
+                        >
+                            {INTRUMENTS_LIST.map((instrument) => (
+                                <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
+                                    {instrument.tradingsymbol} ({instrument.name})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        {errors.selectedFuture && <FormHelperText>{errors.selectedFuture}</FormHelperText>}
+                    </FormControl>
 
-                <TextField
-                    variant="outlined"
-                    fullWidth
-                    label="Enter Quantity"
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    error={Boolean(errors.quantity)}
-                    helperText={errors.quantity}
-                />
+                    <TextField
+                        className="flex-1"
+                        variant="outlined"
+                        label="Enter Quantity"
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        error={Boolean(errors.quantity)}
+                        helperText={errors.quantity}
+                    />
+                </Box>
+
 
                 {['account1', 'account2'].map((account, i) => (
                     <Box key={account} className="border p-3 rounded-md space-y-3">
