@@ -134,7 +134,7 @@ const TradingForm = ({ account1, account2 }) => {
     const handleSubmit = async () => {
         const newErrors = {};
 
-        if (!selectedInstrument) newErrors.selectedInstrument = 'Please select a future';
+        if (!selectedInstrument) newErrors.selectedInstrument = 'Please select a Instrument';
         if (!quantity || parseFloat(quantity) <= 0) newErrors.quantity = 'Enter a valid quantity';
         if (!productType) newErrors.productType = 'Select a product type';
 
@@ -235,7 +235,7 @@ const TradingForm = ({ account1, account2 }) => {
 
                 <Box className="flex gap-2">
                     <FormControl className="flex-1" error={Boolean(errors.selectedInstrument)}>
-                        <InputLabel>Select Future</InputLabel>
+                        <InputLabel>Select Instrument</InputLabel>
                         <Select
                             value={selectedInstrument}
                             onChange={(e) => {
@@ -244,7 +244,7 @@ const TradingForm = ({ account1, account2 }) => {
                                 const selected = INSTRUMENTS_LIST.find(item => item.tradingsymbol === symbol);
                                 setExchange(selected?.exchange || '');
                             }}
-                            label="Select Future"
+                            label="Select Instrument"
                         >
                             {INSTRUMENTS_LIST.map((instrument) => (
                                 <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
@@ -283,7 +283,7 @@ const TradingForm = ({ account1, account2 }) => {
                         label="Product Type"
                     >
                         <MenuItem value="MIS">Intraday (MIS)</MenuItem>
-                        <MenuItem value="NRML">Carry (NRML)</MenuItem>
+                        <MenuItem value="CNC">CNC (CNC)</MenuItem>
                     </Select>
                     {errors.productType && <FormHelperText>{errors.productType}</FormHelperText>}
                 </FormControl>
