@@ -294,7 +294,7 @@ const placeBuySellIntrumentWithStoploss = async ({
       validity: 'DAY',
     });
 
-    if(buyIntrumentResponse?.success === false) {
+    if (buyIntrumentResponse?.success === false) {
       logger.error('Failed to place buy order | error: %o', buyIntrumentResponse.error);
       return { success: false, error: buyIntrumentResponse.error };
     }
@@ -309,41 +309,41 @@ const placeBuySellIntrumentWithStoploss = async ({
       quantity,
       product: product,
       price: buyAccountInfo.stopLoss,
-      trigger_price: buyAccountInfo.price,
+      trigger_price: buyAccountInfo.stopLoss,
       validity: 'DAY',
     });
 
-    if(buyStoplossIntrumentResponse?.success === false) {
+    if (buyStoplossIntrumentResponse?.success === false) {
       logger.error('Failed to place stop-loss order | error: %o', buyStoplossIntrumentResponse.error);
       return { success: false, error: buyStoplossIntrumentResponse.error };
     }
 
-    // const sellIntrumentResponse = await buySellInstrument({
-    //   access_token: sellAccountInfo.access_token,
-    //   api_key: sellAccountInfo.api_key,
-    //   tradingsymbol,
-    //   exchange,
-    //   transaction_type: 'SELL',
-    //   order_type: 'SL-M',
-    //   quantity,
-    //   product: product,
-    //   price: sellAccountInfo.price,
-    //   validity: 'DAY',
-    // });
+    const sellIntrumentResponse = await buySellInstrument({
+      access_token: sellAccountInfo.access_token,
+      api_key: sellAccountInfo.api_key,
+      tradingsymbol,
+      exchange,
+      transaction_type: 'SELL',
+      order_type: 'SL-M',
+      quantity,
+      product: product,
+      price: sellAccountInfo.price,
+      validity: 'DAY',
+    });
 
-    // const sellStoplossIntrumentResponse = await stoplossOrder({
-    //   access_token: sellAccountInfo.access_token,
-    //   api_key: sellAccountInfo.api_key,
-    //   tradingsymbol,
-    //   exchange,
-    //   transaction_type: 'BUY',
-    //   order_type: 'SL', // OR use 'SL' if you want to define trigger + price
-    //   quantity,
-    //   product: product,
-    //   price: sellAccountInfo.price,
-    //   trigger_price: sellAccountInfo.stoploss,
-    //   validity: 'DAY',
-    // });
+    const sellStoplossIntrumentResponse = await stoplossOrder({
+      access_token: sellAccountInfo.access_token,
+      api_key: sellAccountInfo.api_key,
+      tradingsymbol,
+      exchange,
+      transaction_type: 'BUY',
+      order_type: 'SL', // OR use 'SL' if you want to define trigger + price
+      quantity,
+      product: product,
+      price: sellAccountInfo.stopLoss,
+      trigger_price: sellAccountInfo.stopLoss,
+      validity: 'DAY',
+    });
 
     return {
       success: true,
@@ -354,8 +354,8 @@ const placeBuySellIntrumentWithStoploss = async ({
         // stopLossPrice,
         response1: buyIntrumentResponse,
         response2: buyStoplossIntrumentResponse,
-        // response3: sellIntrumentResponse,
-        // response4: sellStoplossIntrumentResponse,
+        response3: sellIntrumentResponse,
+        response4: sellStoplossIntrumentResponse,
       },
       message: 'Nifty Future LIMIT BUY order placed successfully with Stop-Loss',
     };
@@ -439,6 +439,39 @@ const stoplossOrder = async ({ access_token, api_key, tradingsymbol, exchange, t
   }
 };
 
+const getHistoricalData = async (api_key, access_token, instrumentToken, interval, from, to) => {
+  /**
+ * Fetches historical data from Kite API for a given instrument.
+ *
+ * @param {string} accessToken - User access token
+ * @param {string} instrumentToken - The instrument token (e.g., 5633 for NIFTY)
+ * @param {string} interval - Data interval (e.g., 'minute', '5minute', 'day')
+ * @param {string} from - Start datetime in format 'YYYY-MM-DD HH:mm:ss'
+ * @param {string} to - End datetime in format 'YYYY-MM-DD HH:mm:ss'
+ */
+  try {
+    const url = `https://api.kite.trade/instruments/historical/${instrumentToken}/${interval}?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+
+    const response = await axios.get(url, {
+      headers: {
+        'X-Kite-Version': '3',
+        'Authorization': `token ${api_key}:${access_token}`
+      }
+    });
+    if (response?.data?.status === 'success') {
+      logger.info('Stop-loss order placed successfully | order_id: %s', response.data.data.order_id);
+      return { success: true, data: response.data.data };
+    } else {
+      logger.error('Failed to place stop-loss order | error: %o', response.data);
+      return { success: false, error: response.data };
+    }
+
+  } catch (error) {
+    logger.error('Error fetching historical data | %o', error?.response?.data || error?.message);
+    return { success: false, error: error?.response?.data || error?.message };
+  }
+};
+
 
 module.exports = {
   createZerodhaSession,
@@ -449,5 +482,6 @@ module.exports = {
   getPortfolioHoldings,
   GetFutureNiftyAndBankNiftyExpiry,
   placeBuySellIntrumentWithStoploss,
-  getLTP
+  getLTP,
+  getHistoricalData
 };
