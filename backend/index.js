@@ -77,7 +77,7 @@ cron.schedule('* * * * *', async () => {
   const formattedTime = now.format('YYYY-MM-DD HH:mm:ss');
 
   try {
-    logger.info(`[CRON] Checking at: ${formattedTime}`);
+    // logger.info(`[CRON] Checking at: ${formattedTime}`);
 
     if (now.hour() === 7 && now.minute() === 59) {
       const emailTemplate = require('./utils/emailTemplates/serverUpNotification')();

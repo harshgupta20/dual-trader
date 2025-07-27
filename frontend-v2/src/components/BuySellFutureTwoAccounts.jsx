@@ -6,19 +6,17 @@ import {
     Typography,
     ToggleButtonGroup,
     ToggleButton,
-    MenuItem,
-    Select,
     FormHelperText,
     FormControl,
     InputLabel,
-    Autocomplete
 } from '@mui/material';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import ResultDialog from './buySellFuture/ResultDialog';
 import axiosInstance from '../utils/axios';
 import OHLCPanel from './OhlcPanel';
 
 const TradingForm = ({ account1, account2 }) => {
-    const [selectedInstrument, setSelectedInstrument] = useState('');
+    const [selectedInstrument, setSelectedInstrument] = useState(null);
     const [exchange, setExchange] = useState('');
     const [quantity, setQuantity] = useState('');
     const [productType, setProductType] = useState('');
@@ -32,13 +30,14 @@ const TradingForm = ({ account1, account2 }) => {
         account2: { action: 'SELL', price: '', stopLoss: '' },
     });
 
-    const handleGetIntrumentPrice = async (selectedInstrument) => {
+    const handleGetInstrumentPrice = async (symbol) => {
         try {
-            const instrument = `${exchange}:${selectedInstrument}`;
+            if (!symbol || !exchange) return;
+            const instrument = `${exchange}:${symbol}`;
             const response = await axiosInstance.post('data/instruments-ltp', {
                 access_token: account1?.access_token,
                 instruments: [instrument],
-                api_key: account1?.accountKey
+                api_key: account1?.accountKey,
             });
             if (response.data.success) {
                 setInstrumentInfo(response.data.data[instrument]);
@@ -47,7 +46,7 @@ const TradingForm = ({ account1, account2 }) => {
             }
         } catch (error) {
             console.error('Error fetching instrument price:', error);
-            setErrors(prev => ({ ...prev, selectedInstrument: 'Failed to fetch instrument price' }));
+            setErrors((prev) => ({ ...prev, selectedInstrument: 'Failed to fetch instrument price' }));
         }
     };
 
@@ -59,17 +58,17 @@ const TradingForm = ({ account1, account2 }) => {
             });
             if (response.data.success) {
                 setInstrumentList(response.data.data);
+            } else {
+                setErrors((prev) => ({
+                    ...prev,
+                    selectedInstrument: response.data.message || 'Failed to fetch instrument list',
+                }));
             }
-            else{
-                setErrors(prev => ({ ...prev, selectedInstrument: response.data.message || 'Failed to fetch instrument list' }));
-                return;
-            }
-        }
-        catch (error) {
+        } catch (error) {
             console.error('Error fetching instrument list:', error);
-            setErrors(prev => ({ ...prev, selectedInstrument: 'Failed to fetch instrument list' }));
+            setErrors((prev) => ({ ...prev, selectedInstrument: 'Failed to fetch instrument list' }));
         }
-    }
+    };
 
     const validateStopLoss = (account, price, stopLoss) => {
         if (!price || !stopLoss) return '';
@@ -83,19 +82,19 @@ const TradingForm = ({ account1, account2 }) => {
     };
 
     const handleInputChange = (account, field, value) => {
-        setAccountData(prev => {
+        setAccountData((prev) => {
             const updated = {
                 ...prev,
-                [account]: { ...prev[account], [field]: value }
+                [account]: { ...prev[account], [field]: value },
             };
 
             const price = field === 'price' ? value : updated[account].price;
             const stopLoss = field === 'stopLoss' ? value : updated[account].stopLoss;
             const errorMsg = validateStopLoss(account, price, stopLoss);
 
-            setErrors(prevErrors => ({
+            setErrors((prevErrors) => ({
                 ...prevErrors,
-                [account]: errorMsg
+                [account]: errorMsg,
             }));
 
             return updated;
@@ -104,32 +103,31 @@ const TradingForm = ({ account1, account2 }) => {
 
     const handleActionChange = (account, newAction) => {
         if (!newAction) return;
-
         const opposite = newAction === 'BUY' ? 'SELL' : 'BUY';
         const otherAccount = account === 'account1' ? 'account2' : 'account1';
 
-        setAccountData(prev => ({
+        setAccountData((prev) => ({
             ...prev,
             [account]: { ...prev[account], action: newAction },
-            [otherAccount]: { ...prev[otherAccount], action: opposite }
+            [otherAccount]: { ...prev[otherAccount], action: opposite },
         }));
 
-        ['account1', 'account2'].forEach(acc => {
+        ['account1', 'account2'].forEach((acc) => {
             const price = accountData[acc].price;
             const stopLoss = accountData[acc].stopLoss;
             const errorMsg = validateStopLoss(acc, price, stopLoss);
-            setErrors(prev => ({ ...prev, [acc]: errorMsg }));
+            setErrors((prev) => ({ ...prev, [acc]: errorMsg }));
         });
     };
 
     const handleSubmit = async () => {
         const newErrors = {};
 
-        if (!selectedInstrument) newErrors.selectedInstrument = 'Please select a Instrument';
+        if (!selectedInstrument) newErrors.selectedInstrument = 'Please select an instrument';
         if (!quantity || parseFloat(quantity) <= 0) newErrors.quantity = 'Enter a valid quantity';
         if (!productType) newErrors.productType = 'Select a product type';
 
-        ['account1', 'account2'].forEach(account => {
+        ['account1', 'account2'].forEach((account) => {
             const { price, stopLoss } = accountData[account];
             if (!price) newErrors[`${account}_price`] = 'Price is required';
             if (!stopLoss) newErrors[`${account}_stopLoss`] = 'StopLoss is required';
@@ -141,69 +139,55 @@ const TradingForm = ({ account1, account2 }) => {
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) return;
 
-        const selectedInstrumentInfo = instrumentList.find(
-            (instrument) => instrument?.tradingsymbol === selectedInstrument
-        );
-
-        if (!selectedInstrumentInfo) {
-            setErrors(prev => ({ ...prev, selectedInstrument: 'Invalid instrument selected' }));
-            return;
-        }
-
-        accountData.account1 = {
-            api_key: account1?.accountKey,
-            access_token: account1?.access_token,
-            ...accountData.account1
-        };
-        accountData.account2 = {
-            api_key: account2?.accountKey,
-            access_token: account2?.access_token,
-            ...accountData.account2
-        };
-
         const payload = {
-            instrument: selectedInstrumentInfo.tradingsymbol,
+            instrument: selectedInstrument.tradingsymbol,
             quantity,
             exchange,
             product: productType,
-            accounts: accountData,
+            accounts: {
+                account1: {
+                    ...accountData.account1,
+                    api_key: account1?.accountKey,
+                    access_token: account1?.access_token,
+                },
+                account2: {
+                    ...accountData.account2,
+                    api_key: account2?.accountKey,
+                    access_token: account2?.access_token,
+                },
+            },
         };
 
         const response = await axiosInstance.post('trade/buy-sell-instruments', payload);
 
         if (response.data.success) {
-            // setSelectedInstrument('');
-            // setQuantity('');
-            // setExchange('');
-            // setProductType('');
-            // setAccountData({
-            //     account1: { action: 'BUY', price: '', stopLoss: '' },
-            //     account2: { action: 'SELL', price: '', stopLoss: '' },
-            // });
-            // setErrors({});
-            setShowResultDialog({ show: true, data: response?.data?.data });
+            setSelectedInstrument(null);
+            setQuantity('');
+            setExchange('');
+            setProductType('');
+            setAccountData({
+                account1: { action: 'BUY', price: '', stopLoss: '' },
+                account2: { action: 'SELL', price: '', stopLoss: '' },
+            });
+            setErrors({});
+            setShowResultDialog({ show: true, data: response.data.data });
         } else {
-            setErrors(prev => ({
+            setErrors((prev) => ({
                 ...prev,
-                submit: response?.data?.message || 'Order execution failed'
+                submit: response.data.message || 'Order execution failed',
             }));
         }
     };
 
     useEffect(() => {
         let intervalId;
-
         if (selectedInstrument) {
-            const instrument = instrumentList.find(
-                (instrument) => instrument.tradingsymbol === selectedInstrument
-            );
-            setQuantity(instrument?.lot_size || '');
-            setExchange(instrument?.exchange || '');
-
-            handleGetIntrumentPrice(selectedInstrument);
+            setQuantity(selectedInstrument?.lot_size || '');
+            setExchange(selectedInstrument?.exchange || '');
+            handleGetInstrumentPrice(selectedInstrument.tradingsymbol);
 
             intervalId = setInterval(() => {
-                handleGetIntrumentPrice(selectedInstrument);
+                handleGetInstrumentPrice(selectedInstrument.tradingsymbol);
             }, 1000);
         }
 
@@ -216,6 +200,11 @@ const TradingForm = ({ account1, account2 }) => {
         getInstrumentList();
     }, []);
 
+    const filterOptions = createFilterOptions({
+        matchFrom: 'any',
+        stringify: (option) => `${option.tradingsymbol} ${option.name}`,
+    });
+
     return (
         <Box className="p-4 flex flex-1 flex-col justify-between gap-5 min-h-full overflow-scroll">
             <Box className="flex flex-col gap-4">
@@ -227,26 +216,29 @@ const TradingForm = ({ account1, account2 }) => {
                 </Box>
 
                 <Box className="flex gap-2">
-                    <FormControl className="flex-1" error={Boolean(errors.selectedInstrument)}>
-                        <InputLabel>Select Instrument</InputLabel>
-                        <Select
-                            value={selectedInstrument}
-                            onChange={(e) => {
-                                const symbol = e.target.value;
-                                setSelectedInstrument(symbol);
-                                const selected = instrumentList.find(item => item.tradingsymbol === symbol);
-                                setExchange(selected?.exchange || '');
-                            }}
-                            label="Select Instrument"
-                        >
-                            {instrumentList.map((instrument) => (
-                                <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
-                                    {instrument.tradingsymbol} ({instrument.name})
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        {errors.selectedInstrument && <FormHelperText>{errors.selectedInstrument}</FormHelperText>}
-                    </FormControl>
+                    <Autocomplete
+                        options={instrumentList}
+                        filterOptions={filterOptions}
+                        getOptionLabel={(option) =>
+                            option ? `${option.tradingsymbol} (${option.name})` : ''
+                        }
+                        value={selectedInstrument}
+                        onChange={(_, newValue) => {
+                            setSelectedInstrument(newValue);
+                            setExchange(newValue?.exchange || '');
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Select Instrument"
+                                error={Boolean(errors.selectedInstrument)}
+                                helperText={errors.selectedInstrument}
+                            />
+                        )}
+                        fullWidth
+                        disableClearable
+                        className="flex-1"
+                    />
 
                     <TextField
                         className="flex-1"
@@ -270,21 +262,25 @@ const TradingForm = ({ account1, account2 }) => {
 
                 <FormControl error={Boolean(errors.productType)} fullWidth>
                     <InputLabel>Product Type</InputLabel>
-                    <Select
-                        value={productType}
-                        onChange={(e) => setProductType(e.target.value)}
-                        label="Product Type"
-                    >
-                        <MenuItem value="MIS">Intraday (MIS)</MenuItem>
-                        <MenuItem value="CNC">CNC (CNC)</MenuItem>
-                    </Select>
-                    {errors.productType && <FormHelperText>{errors.productType}</FormHelperText>}
+                    <Autocomplete
+                        options={['MIS', 'CNC']}
+                        value={productType || null}
+                        onChange={(_, val) => setProductType(val)}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Product Type"
+                                error={Boolean(errors.productType)}
+                                helperText={errors.productType}
+                            />
+                        )}
+                    />
                 </FormControl>
 
                 {['account1', 'account2'].map((account, i) => (
                     <Box key={account} className="border p-3 rounded-md space-y-3">
                         <Typography className="text-sm text-gray-600">
-                            {account === "account1" ? (
+                            {account === 'account1' ? (
                                 <span>{account1?.user_shortname} ({account1?.user_id})</span>
                             ) : (
                                 <span>{account2?.user_shortname} ({account2?.user_id})</span>
