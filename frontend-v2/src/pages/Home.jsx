@@ -20,7 +20,7 @@ const Home = () => {
           variant="contained"
           size="large"
           className="bg-blue-600 text-white"
-          onClick={() => navigate('/buy-sell-future')}
+          onClick={() => navigate('/buy-sell')}
         >
           Start Trading
         </Button>

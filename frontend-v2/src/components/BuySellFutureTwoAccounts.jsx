@@ -10,7 +10,8 @@ import {
     Select,
     FormHelperText,
     FormControl,
-    InputLabel
+    InputLabel,
+    Autocomplete
 } from '@mui/material';
 import ResultDialog from './buySellFuture/ResultDialog';
 import axiosInstance from '../utils/axios';
@@ -24,46 +25,16 @@ const TradingForm = ({ account1, account2 }) => {
     const [errors, setErrors] = useState({});
     const [showResultDialog, setShowResultDialog] = useState({ show: false });
     const [instrumentInfo, setInstrumentInfo] = useState(null);
+    const [instrumentList, setInstrumentList] = useState([]);
 
     const [accountData, setAccountData] = useState({
         account1: { action: 'BUY', price: '', stopLoss: '' },
         account2: { action: 'SELL', price: '', stopLoss: '' },
     });
 
-    const INSTRUMENTS_LIST = [
-        {
-            "instrument_token": 13623298,
-            "exchange_token": 53216,
-            "tradingsymbol": "NIFTY25JULFUT",
-            "name": "NIFTY",
-            "last_price": 0,
-            "expiry": "2025-07-31",
-            "strike": 0,
-            "tick_size": 0.1,
-            "lot_size": 75,
-            "instrument_type": "FUT",
-            "segment": "NFO-FUT",
-            "exchange": "NFO"
-        },
-        {
-            "instrument_token": 13622530,
-            "exchange_token": 53213,
-            "tradingsymbol": "BANKNIFTY25JULFUT",
-            "name": "BANKNIFTY",
-            "last_price": 0,
-            "expiry": "2025-07-31",
-            "strike": 0,
-            "tick_size": 0.2,
-            "lot_size": 35,
-            "instrument_type": "FUT",
-            "segment": "NFO-FUT",
-            "exchange": "NFO"
-        }
-    ];
-
     const handleGetIntrumentPrice = async (selectedInstrument) => {
         try {
-            const instrument = `NFO:${selectedInstrument}`;
+            const instrument = `${exchange}:${selectedInstrument}`;
             const response = await axiosInstance.post('data/instruments-ltp', {
                 access_token: account1?.access_token,
                 instruments: [instrument],
@@ -79,6 +50,26 @@ const TradingForm = ({ account1, account2 }) => {
             setErrors(prev => ({ ...prev, selectedInstrument: 'Failed to fetch instrument price' }));
         }
     };
+
+    const getInstrumentList = async () => {
+        try {
+            const response = await axiosInstance.post('data/instruments-list', {
+                access_token: account1?.access_token,
+                api_key: account1?.accountKey,
+            });
+            if (response.data.success) {
+                setInstrumentList(response.data.data);
+            }
+            else{
+                setErrors(prev => ({ ...prev, selectedInstrument: response.data.message || 'Failed to fetch instrument list' }));
+                return;
+            }
+        }
+        catch (error) {
+            console.error('Error fetching instrument list:', error);
+            setErrors(prev => ({ ...prev, selectedInstrument: 'Failed to fetch instrument list' }));
+        }
+    }
 
     const validateStopLoss = (account, price, stopLoss) => {
         if (!price || !stopLoss) return '';
@@ -150,7 +141,7 @@ const TradingForm = ({ account1, account2 }) => {
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) return;
 
-        const selectedInstrumentInfo = INSTRUMENTS_LIST.find(
+        const selectedInstrumentInfo = instrumentList.find(
             (instrument) => instrument?.tradingsymbol === selectedInstrument
         );
 
@@ -178,25 +169,23 @@ const TradingForm = ({ account1, account2 }) => {
             accounts: accountData,
         };
 
-        console.log("harsh payload", payload);
-
         const response = await axiosInstance.post('trade/buy-sell-instruments', payload);
 
         if (response.data.success) {
-            setSelectedInstrument('');
-            setQuantity('');
-            setExchange('');
-            setProductType('');
-            setAccountData({
-                account1: { action: 'BUY', price: '', stopLoss: '' },
-                account2: { action: 'SELL', price: '', stopLoss: '' },
-            });
-            setErrors({});
-            setShowResultDialog({ show: true });
+            // setSelectedInstrument('');
+            // setQuantity('');
+            // setExchange('');
+            // setProductType('');
+            // setAccountData({
+            //     account1: { action: 'BUY', price: '', stopLoss: '' },
+            //     account2: { action: 'SELL', price: '', stopLoss: '' },
+            // });
+            // setErrors({});
+            setShowResultDialog({ show: true, data: response?.data?.data });
         } else {
             setErrors(prev => ({
                 ...prev,
-                submit: response.data.message || 'Order execution failed'
+                submit: response?.data?.message || 'Order execution failed'
             }));
         }
     };
@@ -205,7 +194,7 @@ const TradingForm = ({ account1, account2 }) => {
         let intervalId;
 
         if (selectedInstrument) {
-            const instrument = INSTRUMENTS_LIST.find(
+            const instrument = instrumentList.find(
                 (instrument) => instrument.tradingsymbol === selectedInstrument
             );
             setQuantity(instrument?.lot_size || '');
@@ -222,6 +211,10 @@ const TradingForm = ({ account1, account2 }) => {
             if (intervalId) clearInterval(intervalId);
         };
     }, [selectedInstrument]);
+
+    useEffect(() => {
+        getInstrumentList();
+    }, []);
 
     return (
         <Box className="p-4 flex flex-1 flex-col justify-between gap-5 min-h-full overflow-scroll">
@@ -241,12 +234,12 @@ const TradingForm = ({ account1, account2 }) => {
                             onChange={(e) => {
                                 const symbol = e.target.value;
                                 setSelectedInstrument(symbol);
-                                const selected = INSTRUMENTS_LIST.find(item => item.tradingsymbol === symbol);
+                                const selected = instrumentList.find(item => item.tradingsymbol === symbol);
                                 setExchange(selected?.exchange || '');
                             }}
                             label="Select Instrument"
                         >
-                            {INSTRUMENTS_LIST.map((instrument) => (
+                            {instrumentList.map((instrument) => (
                                 <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
                                     {instrument.tradingsymbol} ({instrument.name})
                                 </MenuItem>
@@ -350,6 +343,7 @@ const TradingForm = ({ account1, account2 }) => {
             {showResultDialog?.show && (
                 <ResultDialog
                     open={showResultDialog.show}
+                    data={showResultDialog.data}
                     close={() => setShowResultDialog({ show: false })}
                 />
             )}

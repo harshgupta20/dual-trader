@@ -37,7 +37,7 @@ const App = () => {
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/accounts/auth/callback" element={<AccountCallback />} />
 
-            <Route path="/buy-sell-future" element={<BuySellFuture />} />
+            <Route path="/buy-sell" element={<BuySellFuture />} />
           </Routes>
         </div>
         <div className="">
