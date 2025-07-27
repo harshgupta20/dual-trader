@@ -15,6 +15,7 @@ import {
 import ResultDialog from './buySellFuture/ResultDialog';
 import axiosInstance from '../utils/axios';
 import OHLCPanel from './OhlcPanel';
+import TypeaheadInstrument from './TypeaheadInstrument';
 
 const TradingForm = ({ account1, account2 }) => {
     const [selectedInstrument, setSelectedInstrument] = useState('');
@@ -59,7 +60,7 @@ const TradingForm = ({ account1, account2 }) => {
             if (response.data.success) {
                 setInstrumentList(response.data.data);
             }
-            else{
+            else {
                 setErrors(prev => ({ ...prev, selectedInstrument: response.data.message || 'Failed to fetch instrument list' }));
                 return;
             }
@@ -171,15 +172,15 @@ const TradingForm = ({ account1, account2 }) => {
         const response = await axiosInstance.post('trade/buy-sell-instruments', payload);
 
         if (response.data.success) {
-            setSelectedInstrument('');
-            setQuantity('');
-            setExchange('');
-            setProductType('');
-            setAccountData({
-                account1: { action: 'BUY', price: '', stopLoss: '' },
-                account2: { action: 'SELL', price: '', stopLoss: '' },
-            });
-            setErrors({});
+            // setSelectedInstrument('');
+            // setQuantity('');
+            // setExchange('');
+            // setProductType('');
+            // setAccountData({
+            //     account1: { action: 'BUY', price: '', stopLoss: '' },
+            //     account2: { action: 'SELL', price: '', stopLoss: '' },
+            // });
+            // setErrors({});
             setShowResultDialog({ show: true, data: response?.data?.data });
         } else {
             setErrors(prev => ({
@@ -227,23 +228,20 @@ const TradingForm = ({ account1, account2 }) => {
 
                 <Box className="flex gap-2">
                     <FormControl className="flex-1" error={Boolean(errors.selectedInstrument)}>
-                        <InputLabel>Select Instrument</InputLabel>
-                        <Select
-                            value={selectedInstrument}
-                            onChange={(e) => {
-                                const symbol = e.target.value;
-                                setSelectedInstrument(symbol);
-                                const selected = instrumentList.find(item => item.tradingsymbol === symbol);
-                                setExchange(selected?.exchange || '');
+                        {/* <InputLabel>Select Instrument</InputLabel> */}
+                        <TypeaheadInstrument
+                            label="Search Instrument"
+                            account={account1}
+                            onSelect={(instrument) => {
+                                if (instrument) {
+                                    setSelectedInstrument(instrument.tradingsymbol);
+                                    setExchange(instrument.exchange);
+                                }
                             }}
-                            label="Select Instrument"
-                        >
-                            {instrumentList.map((instrument) => (
-                                <MenuItem key={instrument.instrument_token} value={instrument.tradingsymbol}>
-                                    {instrument.tradingsymbol} ({instrument.name})
-                                </MenuItem>
-                            ))}
-                        </Select>
+                            error={errors.selectedInstrument}
+                            helperText={errors.selectedInstrument}
+                        />
+
                         {errors.selectedInstrument && <FormHelperText>{errors.selectedInstrument}</FormHelperText>}
                     </FormControl>
 
