@@ -79,15 +79,14 @@ cron.schedule('* * * * *', async () => {
   try {
     // logger.info(`[CRON] Checking at: ${formattedTime}`);
 
-    if (now.hour() === 7 && now.minute() === 59) {
+    if (now.hour() === 6 && now.minute() === 10) {
       const emailTemplate = require('./utils/emailTemplates/serverUpNotification')();
 
       await sendMail(
-        process.env.GMAIL_EMAIL,            // to
+        [process.env.GMAIL_EMAIL],            // to
         emailTemplate.subject,              // subject
         emailTemplate.html,                 // html body
-        process.env.GMAIL_CC_EMAIL2,        // cc
-        process.env.GMAIL_EMAIL             // from
+        [process.env.GMAIL_CC_EMAIL2, process.env.GMAIL_CC_EMAIL],           // cc
       );
 
       logger.info(`✅ [CRON] Server up notification sent at ${formattedTime} IST`);
@@ -100,11 +99,10 @@ cron.schedule('* * * * *', async () => {
 
     try {
       await sendMail(
-        process.env.GMAIL_EMAIL,                  // to
+        [process.env.GMAIL_EMAIL],                  // to
         errorEmailTemplate.subject,               // subject
         errorEmailTemplate.html,                  // html body
-        process.env.GMAIL_CC_EMAIL2,              // cc
-        process.env.GMAIL_EMAIL                   // from
+        [process.env.GMAIL_CC_EMAIL2, process.env.GMAIL_CC_EMAIL],              // cc
       );
 
       logger.error(`[CRON] Error notification email sent: ${errorEmailTemplate.subject}`);
