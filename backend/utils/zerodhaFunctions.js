@@ -2,12 +2,9 @@ const { generateSHA256Checksum } = require('./helperFunction');
 const axios = require('axios');
 const logger = require('./winstonLogger');
 const csv = require('csv-parser');
-
-// const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT1_API_KEY;
-// const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT1_API_SECRET;
-
-const ZERODHA_ACCOUNT1_API_KEY = process.env.ZERODHA_ACCOUNT2_API_KEY;
-const ZERODHA_ACCOUNT1_API_SECRET = process.env.ZERODHA_ACCOUNT2_API_SECRET;
+const { createObjectCsvWriter } = require('csv-writer');
+const fs = require('fs');
+const path = require('path');
 
 const createZerodhaSession = async ({ api_key, request_token, api_secret }) => {
   try {
@@ -37,7 +34,7 @@ const createZerodhaSession = async ({ api_key, request_token, api_secret }) => {
   }
 };
 
-const getZerodhaProfile = async ({ access_token }) => {
+const getZerodhaProfile = async ({ access_token, api_key }) => {
   if (!access_token) throw new Error('Missing access_token');
 
   try {
@@ -46,7 +43,7 @@ const getZerodhaProfile = async ({ access_token }) => {
     const response = await axios.get('https://api.kite.trade/user/profile', {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
+        'Authorization': `token ${api_key}:${access_token}`,
       },
     });
 
@@ -60,6 +57,7 @@ const getZerodhaProfile = async ({ access_token }) => {
 
 const placeZerodhaOrder = async ({
   access_token,
+  api_key,
   tradingsymbol,
   exchange,
   transaction_type,
@@ -100,7 +98,7 @@ const placeZerodhaOrder = async ({
       {
         headers: {
           'X-Kite-Version': '3',
-          'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
+          'Authorization': `token ${api_key}:${access_token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
@@ -114,7 +112,7 @@ const placeZerodhaOrder = async ({
   }
 };
 
-const getZerodhaQuote = async ({ access_token, instruments }) => {
+const getZerodhaQuote = async ({ access_token, instruments, api_key }) => {
   if (!access_token || !instruments?.length) {
     throw new Error('Missing access_token or instruments');
   }
@@ -126,7 +124,7 @@ const getZerodhaQuote = async ({ access_token, instruments }) => {
     const response = await axios.get(`https://api.kite.trade/quote?${query}`, {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`,
+        'Authorization': `token ${api_key}:${access_token}`,
       },
     });
 
@@ -205,14 +203,14 @@ const placeNiftyFutureOrderWithStopLoss = async ({ api_key, access_token }) => {
   }
 };
 
-const getPortfolioHoldings = async ({ access_token }) => {
+const getPortfolioHoldings = async ({ access_token, api_key }) => {
   try {
     logger.info('Getting portfolio holdings');
 
     const response = await axios.get('https://api.kite.trade/portfolio/holdings', {
       headers: {
         'X-Kite-Version': '3',
-        'Authorization': `token ${ZERODHA_ACCOUNT1_API_KEY}:${access_token}`
+        'Authorization': `token ${api_key}:${access_token}`
       }
     });
 
@@ -472,6 +470,93 @@ const getHistoricalData = async (api_key, access_token, instrumentToken, interva
   }
 };
 
+const setInstrumentsFullDumpLocally = async ({ api_key, access_token }) => {
+  try {
+    const headers = {
+      'X-Kite-Version': '3',
+      'Authorization': `token ${api_key}:${access_token}`
+    };
+
+    const outputPath = path.join(__dirname, '..', 'zerodha_instruments_fut.csv');
+
+    const response = await axios.get('https://api.kite.trade/instruments', {
+      headers,
+      responseType: 'stream' // We'll stream the file
+    });
+
+    // Create a write stream
+    const writeStream = fs.createWriteStream(outputPath);
+
+    // Pipe the response directly (no gunzip needed)
+    response.data.pipe(writeStream);
+
+    // Wrap stream completion in a promise
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
+
+    logger.info('✅ instruments.csv saved at %s', outputPath);
+    return { success: true, data: outputPath };
+
+  } catch (error) {
+    logger.error('❌ Error saving instruments futures | %o', error?.response?.data || error?.message);
+    return { success: false, error: error?.response?.data || error?.message };
+  }
+};
+
+const setFilteredInstrumentsFuturesLocally = async ({ api_key, access_token }) => {
+  try {
+    const headers = {
+      'X-Kite-Version': '3',
+      'Authorization': `token ${api_key}:${access_token}`
+    };
+
+    const filteredCsvPath = path.join(__dirname, '..', 'zerodha_instruments_fut_filtered.csv');
+
+    // Step 1: Get the response stream directly
+    const response = await axios.get('https://api.kite.trade/instruments', {
+      headers,
+      responseType: 'stream'
+    });
+
+    const filteredData = [];
+
+    // Step 2: Pipe the stream and apply filters
+    await new Promise((resolve, reject) => {
+      response.data
+        .pipe(csv())
+        .on('data', (row) => {
+          if (row.name.includes('NIFTY') && row.instrument_type === 'FUT' && row.exchange === 'NFO') {
+            filteredData.push(row);
+          }
+        })
+        .on('end', resolve)
+        .on('error', reject);
+    });
+
+    logger.info(`✅ Filtered ${filteredData.length} futures instruments`);
+
+    // Step 3: Save the filtered data
+    if (filteredData.length > 0) {
+      const csvWriter = createObjectCsvWriter({
+        path: filteredCsvPath,
+        header: Object.keys(filteredData[0]).map((key) => ({ id: key, title: key }))
+      });
+
+      await csvWriter.writeRecords(filteredData);
+      logger.info('✅ Filtered futures CSV saved at %s', filteredCsvPath);
+    } else {
+      logger.warn('⚠️ No matching futures instruments found to write.');
+    }
+
+    return { success: true, data: filteredCsvPath };
+
+  } catch (error) {
+    logger.error('❌ Error in filtering and saving futures instruments | %o', error?.response?.data || error?.message);
+    return { success: false, error: error?.response?.data || error?.message };
+  }
+};
 
 module.exports = {
   createZerodhaSession,
@@ -483,5 +568,7 @@ module.exports = {
   GetFutureNiftyAndBankNiftyExpiry,
   placeBuySellIntrumentWithStoploss,
   getLTP,
-  getHistoricalData
+  getHistoricalData,
+  setInstrumentsFullDumpLocally,
+  setFilteredInstrumentsFuturesLocally
 };
