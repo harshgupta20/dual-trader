@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const cron = require('node-cron');
-const moment = require('moment-timezone');
 const rateLimit = require('express-rate-limit'); // ✅ Import rate limiter
 const authRouter = require("./routers/auth");
 const userRouter = require("./routers/user");
@@ -10,6 +9,7 @@ const tradeRouter = require("./routers/trade");
 const dataRouter = require("./routers/data");
 const logger = require('./utils/winstonLogger');
 const { sendMail } = require('./utils/emailService');
+const moment = require('moment-timezone');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3000;
@@ -57,6 +57,13 @@ app.use((req, res, next) => {
   next();
 });
 
+app.post("/test", async (req, res) => {
+  res.json({
+    message: 'Test endpoint is working.',
+    success: true,
+  });
+})
+
 app.get('/', (req, res) => {
   res.json({
     message: 'Server is up and runnnig.',
@@ -64,27 +71,49 @@ app.get('/', (req, res) => {
   });
 });
 
-// Schedule: Run every minute, but only act at 9:30 AM IST
-// cron.schedule('* * * * *', () => {
-//   try {
-//     console.log("Running cron job at:", moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'));
-//     const now = moment().tz('Asia/Kolkata');
-//     if (now.hour() === 1 && now.minute() === 20) {
-//       const currentTimeIST = moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
-//       const emailTemplate = require('./utils/emailTemplates/serverUpNotification')();
-//       sendMail(process.env.GMAIL_EMAIL, emailTemplate.subject, emailTemplate.html, process.env.GMAIL_CC_EMAIL2, process.env.GMAIL_EMAIL)
-//       console.log(`✅ Cron Job running at ${currentTimeIST} IST`);
-//     }
-//   } catch (error) {
-//     console.error('Error in cron job:', error);
-//     logger.error('Error in cron job: %s', error.message);
-//     const errorEmailTemplate = require('./utils/emailTemplates/cronErrorNotification')(error);
-//     sendMail(process.env.GMAIL_EMAIL, "Cron Job Error", "Server is not running and crashed.", process.env.GMAIL_CC_EMAIL2, process.env.GMAIL_EMAIL)
-//     console.error('Error email sent:', errorEmailTemplate.subject);
-//     logger.error('Error email sent: %s', errorEmailTemplate.subject);
-//   }
-// });
+// Schedule: Run every minute, but only act at 7:59 AM IST
+cron.schedule('* * * * *', async () => {
+  const now = moment().tz('Asia/Kolkata');
+  const formattedTime = now.format('YYYY-MM-DD HH:mm:ss');
 
+  try {
+    logger.info(`[CRON] Checking at: ${formattedTime}`);
+
+    if (now.hour() === 7 && now.minute() === 59) {
+      const emailTemplate = require('./utils/emailTemplates/serverUpNotification')();
+
+      await sendMail(
+        process.env.GMAIL_EMAIL,            // to
+        emailTemplate.subject,              // subject
+        emailTemplate.html,                 // html body
+        process.env.GMAIL_CC_EMAIL2,        // cc
+        process.env.GMAIL_EMAIL             // from
+      );
+
+      logger.info(`✅ [CRON] Server up notification sent at ${formattedTime} IST`);
+    }
+  } catch (error) {
+    logger.error(`[CRON ERROR] Failed at ${formattedTime}: ${error.message}`);
+    console.error(`[CRON ERROR]`, error);
+
+    const errorEmailTemplate = require('./utils/emailTemplates/cronErrorNotification')(error);
+
+    try {
+      await sendMail(
+        process.env.GMAIL_EMAIL,                  // to
+        errorEmailTemplate.subject,               // subject
+        errorEmailTemplate.html,                  // html body
+        process.env.GMAIL_CC_EMAIL2,              // cc
+        process.env.GMAIL_EMAIL                   // from
+      );
+
+      logger.error(`[CRON] Error notification email sent: ${errorEmailTemplate.subject}`);
+    } catch (mailErr) {
+      logger.error(`[MAIL ERROR] Failed to send error notification: ${mailErr.message}`);
+      console.error('[MAIL ERROR]', mailErr);
+    }
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
