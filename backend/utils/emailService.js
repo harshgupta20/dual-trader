@@ -1,11 +1,11 @@
 const nodemailer = require('nodemailer');
 // require("dotenv").config();
 
-const SERVICE = process.env.SERVICE;
-const HOST =  process.env.HOST;
-const SECURE = process.env.SECURE;
-const EMAIL =  process.env.EMAIL;
-const PASSWORD = process.env.PASSWORD;
+const SERVICE = process.env.GMAIL_SERVICE;
+const HOST =  process.env.GMAIL_HOST;
+const SECURE = process.env.GMAIL_SECURE;
+const EMAIL =  process.env.GMAIL_EMAIL;
+const PASSWORD = process.env.GMAIL_PASSWORD;
 
 const transporter = nodemailer.createTransport({
   service: SERVICE,
